@@ -83,6 +83,12 @@ td.content{min-width:220px;white-space:pre-wrap}
 .sealed .seal{width:72px;height:72px;margin:0 auto 12px;border:2px solid var(--stamp);border-radius:50%;display:grid;place-items:center;color:var(--stamp);font-family:var(--f-display);font-weight:700;font-size:15px;transform:rotate(-8deg);line-height:1.2}
 .sealed p{margin:0}
 .mine-h{font-size:14px;font-weight:600;margin:0 0 8px}
+.warn{border:2px solid var(--stamp);background:var(--stamp-soft);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.warn strong{font-family:var(--f-display);font-weight:400;font-size:19px;color:var(--stamp);letter-spacing:0}
+.warn p{margin:0;font-size:14px;line-height:1.65;color:var(--ink)}
+.warn b{color:var(--stamp)}
+.pledge{flex-direction:row;align-items:flex-start;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink);background:var(--paper);border:1px dashed var(--stamp);border-radius:4px;padding:10px 12px;cursor:pointer}
+.pledge input{width:auto;margin-top:3px;accent-color:var(--stamp);flex:none}
 .notice{background:var(--stamp-soft);color:var(--ink);border-radius:4px;padding:10px 12px;font-size:13.5px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -113,6 +119,11 @@ td.content{min-width:220px;white-space:pre-wrap}
   <div class="grid">
     <section class="card" aria-labelledby="formTitle">
       <h2 id="formTitle">친구 칭찬하기</h2>
+      <div class="warn" role="note" aria-labelledby="warnTitle">
+        <strong id="warnTitle">장난으로 쓰면 절대 안 돼요</strong>
+        <p>칭찬 기록은 선생님이 <b>생활 지도와 학생 기록에 실제로 참고하는 자료</b>예요. 사실이 아닌 내용, 장난스러운 글, 친구를 놀리거나 비꼬는 글은 <b>절대 쓰지 마세요.</b></p>
+        <p>친구를 평가하는 글에는 <b>쓴 사람의 태도도 함께 드러나요.</b> 내가 쓴 글이 진지한지, 친구를 존중하는지도 선생님이 <b>나의 태도를 살필 때 참고할 수 있어요.</b></p>
+      </div>
       <form id="f" novalidate>
         <div class="row">
           <label for="num">번호<input id="num" type="number" min="1" max="50" inputmode="numeric" placeholder="12"></label>
@@ -128,6 +139,7 @@ td.content{min-width:220px;white-space:pre-wrap}
           <textarea id="content" placeholder="언제, 어디서, 무엇을 했는지 적어 주세요. 예: 점심시간 후 아무도 시키지 않았는데 교실 분리수거함을 정리함."></textarea>
         </label>
         <label for="writer">쓴 사람<input id="writer" placeholder="내 이름"></label>
+        <label class="pledge" for="pledge"><input type="checkbox" id="pledge"><span>장난이 아니라 내가 직접 보거나 겪은 사실만 진심으로 적었어요. 내가 쓴 글이 나의 태도를 살피는 데 참고될 수 있다는 것도 알아요.</span></label>
         <div class="form-actions">
           <button type="submit" class="btn-main" id="saveBtn">기록 저장</button>
           <button type="button" class="btn-ghost" id="cancelEdit" hidden>수정 취소</button>
@@ -237,7 +249,7 @@ $("showToggle").addEventListener("change",async e=>{
 });
 
 function setMsg(t,err){$("msg").textContent=t;$("msg").className="msg"+(err?" err":"")}
-function resetForm(){editingId=null;$("num").value="";$("name").value="";$("content").value="";$("date").value=today();$("cat0").checked=true;
+function resetForm(){editingId=null;$("pledge").checked=false;$("num").value="";$("name").value="";$("content").value="";$("date").value=today();$("cat0").checked=true;
   $("saveBtn").textContent="기록 저장";$("cancelEdit").hidden=true;$("formTitle").textContent="친구 칭찬하기"}
 $("cancelEdit").addEventListener("click",()=>{resetForm();setMsg("")});
 
@@ -248,6 +260,7 @@ $("f").addEventListener("submit",async e=>{
   if(!rec.name){setMsg("칭찬할 친구 이름을 적어 주세요.",true);$("name").focus();return}
   if(!rec.content){setMsg("어떤 행동을 칭찬하는지 적어 주세요.",true);$("content").focus();return}
   if(!rec.writer){setMsg("쓴 사람(내 이름)을 적어 주세요.",true);$("writer").focus();return}
+  if(!$("pledge").checked){setMsg("저장하기 전에 약속 칸을 읽고 체크해 주세요.",true);$("pledge").focus();return}
   if(!col){setMsg("저장 기능에 연결되지 않아 저장하지 못했습니다.",true);return}
   try{localStorage.setItem("writer",rec.writer)}catch(_){}
   $("saveBtn").disabled=true;

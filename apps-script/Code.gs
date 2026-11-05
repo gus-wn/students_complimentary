@@ -19,6 +19,9 @@
  *   B3  학급 이름
  *   B4  교사용 비밀번호 (목표 트리의 '선생님 모드'에서 사용)
  *   B5  기말고사 첫날 (목표 트리에 D-day 표시)
+ *
+ * 알림(매일 아침 목표 알림, 한 번에 보내기)은 목표 트리의 '선생님 모드' 화면에서
+ * Firebase 연결과 시각·기간·문구를 정합니다. 설정은 이 스크립트의 속성에 저장됩니다.
  */
 
 const RECORD_SHEET = '칭찬기록';
@@ -26,12 +29,12 @@ const SETTING_SHEET = '설정';
 const SUMMARY_SHEET = '학생별 합계';
 const GOAL_SHEET = '기말목표';
 const HEADERS = ['작성 시각', '날짜', '번호', '칭찬받은 학생', '칭찬 영역', '구체적인 행동', '쓴 사람', '기록 ID'];
-const GOAL_HEADERS = ['작성 시각', '번호', '이름', '장식', '나의 목표', '실천 방법', '도장', '도장 찍은 시각', '목표 ID', '수정키'];
+const GOAL_HEADERS = ['작성 시각', '번호', '이름', '장식', '나의 목표', '실천 방법', '도장', '도장 찍은 시각', '목표 ID', '수정키', '알림 토큰'];
 const CATS = ['학업·탐구', '배려·나눔', '봉사', '리더십', '질서·생활', '성실·책임', '기타'];
 const DECOS = ['별', '하트', '방울', '종', '리본', '눈송이', '선물상자', '사탕지팡이', '달', '도토리'];
 
 /* 기말목표 시트의 열 번호 (1부터) */
-const G = { time: 1, num: 2, name: 3, deco: 4, goal: 5, plan: 6, stamp: 7, stampAt: 8, id: 9, token: 10 };
+const G = { time: 1, num: 2, name: 3, deco: 4, goal: 5, plan: 6, stamp: 7, stampAt: 8, id: 9, token: 10, push: 11 };
 
 /** 처음 한 번 실행 (다시 실행해도 기존 기록은 지워지지 않습니다). */
 function setup() {
@@ -68,12 +71,15 @@ function setup() {
 
   const goal = ss.getSheetByName(GOAL_SHEET) || ss.insertSheet(GOAL_SHEET);
   if (goal.getLastRow() === 0) goal.appendRow(GOAL_HEADERS);
+  goal.getRange(1, 1, 1, GOAL_HEADERS.length).setValues([GOAL_HEADERS]);
   goal.getRange(1, 1, 1, GOAL_HEADERS.length).setFontWeight('bold').setBackground('#fdf1e7');
   goal.setFrozenRows(1);
   goal.setColumnWidth(G.goal, 360);
   goal.setColumnWidth(G.plan, 300);
   goal.getRange(1, G.goal, goal.getMaxRows(), 2).setWrap(true);
-  goal.hideColumns(G.id, 2);
+  goal.hideColumns(G.id, 3);
+
+  installDailyTrigger(); // 알림 설정이 있으면 매일 알림 예약을 다시 맞춥니다
 
   const bad = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
   if (bad && bad.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(bad);
@@ -111,6 +117,7 @@ function publicGoals() {
     ok: true,
     className: className(),
     examDate: examDate(),
+    push: publicPush(),
     goals: goalRows().map(g => ({ id: g.id, num: g.num, name: g.name, deco: g.deco, stamped: g.stamped }))
   };
 }
@@ -125,6 +132,12 @@ function doPost(e) {
       case 'myGoal': return json(myGoal(d));
       case 'teacher': return json(teacherGoals(d));
       case 'stamp': return json(stampGoal(d));
+      case 'subscribe': return json(subscribe(d, true));
+      case 'unsubscribe': return json(subscribe(d, false));
+      case 'pushSettings': return json(getPushSettings(d));
+      case 'savePushSettings': return json(savePushSettings(d));
+      case 'saveFirebase': return json(saveFirebase(d));
+      case 'sendNow': return json(sendNow(d));
       default: return json(savePraise(d)); // 칭찬 기록부 (action 없음)
     }
   } catch (err) {
@@ -179,7 +192,7 @@ function saveGoal(d) {
 function myGoal(d) {
   const g = goalRows().filter(x => x.id === d.id && x.token === String(d.token || ''))[0];
   if (!g) return { ok: false };
-  return { ok: true, goal: { id: g.id, num: g.num, name: g.name, deco: g.deco, goal: g.goal, plan: g.plan, stamped: g.stamped } };
+  return { ok: true, goal: { id: g.id, num: g.num, name: g.name, deco: g.deco, goal: g.goal, plan: g.plan, stamped: g.stamped, push: !!g.push } };
 }
 
 function teacherGoals(d) {
@@ -188,7 +201,7 @@ function teacherGoals(d) {
     ok: true,
     goals: goalRows().map(g => ({
       id: g.id, num: g.num, name: g.name, deco: g.deco, goal: g.goal, plan: g.plan,
-      stamped: g.stamped, stampAt: g.stampAt, time: g.time
+      stamped: g.stamped, stampAt: g.stampAt, time: g.time, push: !!g.push
     }))
   };
 }
@@ -206,6 +219,222 @@ function stampGoal(d) {
   });
 }
 
+/* ───────────── 알림 (Firebase Cloud Messaging) ───────────── */
+
+const TZ = 'Asia/Seoul';
+const DEFAULT_PUSH = {
+  enabled: false,
+  time: '07:30',
+  start: '',
+  end: '',
+  title: '오늘의 기말고사 목표',
+  body: '{이름}의 기말고사 목표는! "{목표}" 입니다. 오늘도 한 걸음! ({디데이})',
+  skipStamped: true
+};
+
+function props() { return PropertiesService.getScriptProperties(); }
+function readJson(key, fallback) {
+  try { const v = props().getProperty(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+}
+function pushSettings() { return Object.assign({}, DEFAULT_PUSH, readJson('PUSH_SETTINGS', {})); }
+
+/** 학생 페이지가 알림 등록에 쓰는 공개 설정 (비밀 키는 절대 보내지 않습니다) */
+function publicPush() {
+  const web = readJson('FIREBASE_WEB', null);
+  const sa = readJson('FIREBASE_SA', null);
+  if (!web || !sa) return null;
+  const st = pushSettings();
+  return { firebase: web.config, vapidKey: web.vapidKey, enabled: st.enabled, time: st.time, start: st.start, end: st.end };
+}
+
+/** 학생 알림 등록/해제: 목표를 쓴 기기(수정키)에서만 */
+function subscribe(d, on) {
+  return withLock(() => {
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GOAL_SHEET);
+    const row = sh && findRow(sh, d.id);
+    if (!row || String(sh.getRange(row, G.token).getValue()) !== String(d.token || '')) {
+      return { ok: false, error: '내 목표를 찾지 못했어요. 목표를 쓴 기기에서 다시 시도해 주세요.' };
+    }
+    const fcm = on ? clip(d.fcm, 400) : '';
+    if (on && !fcm) return { ok: false, error: '알림 등록 정보가 없어요.' };
+    sh.getRange(row, G.push).setValue(fcm);
+    return { ok: true, push: on };
+  });
+}
+
+function getPushSettings(d) {
+  if (!checkKey(d.key)) return { ok: false, error: '비밀번호가 맞지 않아요.' };
+  const rows = goalRows();
+  const web = readJson('FIREBASE_WEB', null);
+  return {
+    ok: true,
+    settings: pushSettings(),
+    connected: !!(web && readJson('FIREBASE_SA', null)),
+    projectId: web ? web.config.projectId : '',
+    subscribers: rows.filter(g => g.push).length,
+    total: rows.length,
+    examDate: examDate(),
+    log: readJson('PUSH_LOG', null)
+  };
+}
+
+function savePushSettings(d) {
+  if (!checkKey(d.key)) return { ok: false, error: '비밀번호가 맞지 않아요.' };
+  const v = d.settings || {};
+  const dateOk = x => x === '' || /^\d{4}-\d{2}-\d{2}$/.test(x);
+  const st = {
+    enabled: v.enabled === true,
+    time: /^([01]\d|2[0-3]):[0-5]\d$/.test(v.time) ? v.time : DEFAULT_PUSH.time,
+    start: dateOk(String(v.start || '')) ? String(v.start || '') : '',
+    end: dateOk(String(v.end || '')) ? String(v.end || '') : '',
+    title: clip(v.title, 60) || DEFAULT_PUSH.title,
+    body: clip(v.body, 300) || DEFAULT_PUSH.body,
+    skipStamped: v.skipStamped !== false
+  };
+  if (st.start && st.end && st.start > st.end) return { ok: false, error: '시작일이 종료일보다 늦어요.' };
+  props().setProperty('PUSH_SETTINGS', JSON.stringify(st));
+  installDailyTrigger();
+  return { ok: true, settings: st };
+}
+
+/** Firebase 연결 저장: 웹 설정(공개)과 서비스 계정 키(비밀) */
+function saveFirebase(d) {
+  if (!checkKey(d.key)) return { ok: false, error: '비밀번호가 맞지 않아요.' };
+  const c = d.config || {};
+  if (!c.apiKey || !c.projectId || !c.messagingSenderId || !c.appId) {
+    return { ok: false, error: '웹 앱 설정(firebaseConfig)에서 apiKey, projectId, messagingSenderId, appId를 찾지 못했어요.' };
+  }
+  const vapidKey = clip(d.vapidKey, 200);
+  if (vapidKey.length < 60) return { ok: false, error: '웹 푸시 인증서 키(키 쌍)를 확인해 주세요.' };
+  let sa;
+  try { sa = typeof d.serviceAccount === 'string' ? JSON.parse(d.serviceAccount) : d.serviceAccount; } catch (e) { sa = null; }
+  if (!sa || !sa.client_email || !sa.private_key) {
+    return { ok: false, error: '서비스 계정 JSON 파일 내용을 그대로 붙여 넣어 주세요.' };
+  }
+  const saSlim = { client_email: sa.client_email, private_key: sa.private_key, project_id: sa.project_id || c.projectId };
+  try {
+    fcmAccessToken(saSlim, true); // 키가 맞는지 바로 확인
+  } catch (e) {
+    return { ok: false, error: '서비스 계정 키로 구글에 접속하지 못했어요. 파일 내용을 다시 확인해 주세요.' };
+  }
+  const config = {
+    apiKey: c.apiKey, authDomain: c.authDomain || '', projectId: c.projectId,
+    storageBucket: c.storageBucket || '', messagingSenderId: c.messagingSenderId, appId: c.appId
+  };
+  props().setProperty('FIREBASE_WEB', JSON.stringify({ config: config, vapidKey: vapidKey }));
+  props().setProperty('FIREBASE_SA', JSON.stringify(saSlim));
+  return { ok: true, projectId: config.projectId };
+}
+
+/** 지금 한 번에 보내기 */
+function sendNow(d) {
+  if (!checkKey(d.key)) return { ok: false, error: '비밀번호가 맞지 않아요.' };
+  if (!readJson('FIREBASE_SA', null)) return { ok: false, error: 'Firebase 연결을 먼저 해 주세요.' };
+  const st = pushSettings();
+  const title = clip(d.title, 60) || st.title;
+  const body = clip(d.body, 300) || st.body;
+  const r = sendToAll(title, body, d.skipStamped === true);
+  logPush('지금 보내기', r);
+  return Object.assign({ ok: true }, r);
+}
+
+/** 매일 정해진 시각에 실행됩니다 (트리거) */
+function dailyPush() {
+  const st = pushSettings();
+  if (!st.enabled || !readJson('FIREBASE_SA', null)) return;
+  const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  if (st.start && today < st.start) return;
+  if (st.end && today > st.end) return;
+  if (props().getProperty('PUSH_LAST_DAILY') === today) return;
+  props().setProperty('PUSH_LAST_DAILY', today);
+  logPush('매일 알림', sendToAll(st.title, st.body, st.skipStamped));
+}
+
+function installDailyTrigger() {
+  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'dailyPush') ScriptApp.deleteTrigger(t); });
+  const st = pushSettings();
+  if (!st.enabled) return;
+  const hm = st.time.split(':').map(Number);
+  ScriptApp.newTrigger('dailyPush').timeBased().atHour(hm[0]).nearMinute(hm[1]).everyDays(1).inTimezone(TZ).create();
+}
+
+/** 알림 받는 학생 모두에게 각자 목표를 넣어 보냅니다 */
+function sendToAll(titleTpl, bodyTpl, skipStamped) {
+  const sa = readJson('FIREBASE_SA', null);
+  const targets = goalRows().filter(g => g.push && !(skipStamped && g.stamped));
+  if (!targets.length) return { sent: 0, failed: 0, removed: 0, targets: 0 };
+  const token = fcmAccessToken(sa, false);
+  const url = 'https://fcm.googleapis.com/v1/projects/' + sa.project_id + '/messages:send';
+  const dd = ddayText();
+  const reqs = targets.map(g => {
+    const fill = t => String(t).replace(/\{이름\}/g, g.name).replace(/\{목표\}/g, g.goal).replace(/\{디데이\}/g, dd).replace(/\{장식\}/g, g.deco);
+    return {
+      url: url, method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + token },
+      payload: JSON.stringify({
+        message: {
+          token: g.push,
+          webpush: {
+            headers: { Urgency: 'high', TTL: '43200' },
+            data: { title: fill(titleTpl), body: fill(bodyTpl), url: './', tag: 'goal-tree' }
+          }
+        }
+      })
+    };
+  });
+  let sent = 0, failed = 0;
+  const dead = [];
+  const res = [];
+  for (let i = 0; i < reqs.length; i += 50) res.push.apply(res, UrlFetchApp.fetchAll(reqs.slice(i, i + 50)));
+  res.forEach((r, i) => {
+    const code = r.getResponseCode();
+    if (code === 200) { sent++; return; }
+    failed++;
+    if (code === 404 || /UNREGISTERED|INVALID_ARGUMENT/.test(r.getContentText())) dead.push(targets[i].id);
+  });
+  if (dead.length) {
+    withLock(() => {
+      const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GOAL_SHEET);
+      dead.forEach(id => { const row = findRow(sh, id); if (row) sh.getRange(row, G.push).setValue(''); });
+    });
+  }
+  return { sent: sent, failed: failed, removed: dead.length, targets: targets.length };
+}
+
+function ddayText() {
+  const ex = examDate();
+  if (!ex) return '';
+  const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  const diff = Math.round((Date.parse(ex) - Date.parse(today)) / 86400000);
+  return diff > 0 ? 'D-' + diff : diff === 0 ? 'D-DAY' : 'D+' + (-diff);
+}
+
+function logPush(kind, r) {
+  props().setProperty('PUSH_LOG', JSON.stringify(Object.assign({ kind: kind, at: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm') }, r)));
+}
+
+/** 서비스 계정으로 FCM 접속 토큰 받기 (50분 저장) */
+function fcmAccessToken(sa, fresh) {
+  const cache = CacheService.getScriptCache();
+  if (!fresh) { const c = cache.get('FCM_TOKEN'); if (c) return c; }
+  const now = Math.floor(Date.now() / 1000);
+  const b64 = o => Utilities.base64EncodeWebSafe(typeof o === 'string' ? o : JSON.stringify(o)).replace(/=+$/, '');
+  const head = b64({ alg: 'RS256', typ: 'JWT' });
+  const claim = b64({
+    iss: sa.client_email, scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600
+  });
+  const sig = Utilities.base64EncodeWebSafe(Utilities.computeRsaSha256Signature(head + '.' + claim, sa.private_key)).replace(/=+$/, '');
+  const r = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: head + '.' + claim + '.' + sig }
+  });
+  const j = JSON.parse(r.getContentText() || '{}');
+  if (!j.access_token) throw new Error('token');
+  cache.put('FCM_TOKEN', j.access_token, 3000);
+  return j.access_token;
+}
+
 /* ───────────── 도우미 ───────────── */
 
 function goalRows() {
@@ -218,7 +447,7 @@ function goalRows() {
       num: r[G.num - 1], name: String(r[G.name - 1]), deco: String(r[G.deco - 1]),
       goal: String(r[G.goal - 1]), plan: String(r[G.plan - 1]),
       stamped: r[G.stamp - 1] === true, stampAt: fmtDate(r[G.stampAt - 1]),
-      id: String(r[G.id - 1]), token: String(r[G.token - 1])
+      id: String(r[G.id - 1]), token: String(r[G.token - 1]), push: String(r[G.push - 1] || '')
     }));
 }
 

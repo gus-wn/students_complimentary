@@ -273,7 +273,11 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
     <div class="field">
       <label>모델</label>
       <input id="sModel" autocomplete="off">
-      <div class="help">기본값 gemini-flash-latest (항상 최신 Flash). 오류가 나면 gemini-2.5-flash 로 바꿔 보세요.</div>
+      <div class="help">기본값 gemini-2.5-flash (무료 사용 가능). 안 되면 앱이 다른 모델로 알아서 바꿔 봐요.</div>
+    </div>
+    <button class="btn ghost" onclick="testConn()">🔌 연결 테스트</button>
+    <div id="connRes" class="help" style="margin-top:8px;font-size:13px;line-height:1.5"></div>
+    <div>
     </div>
   </div>
 
@@ -333,13 +337,14 @@ const DAYS = ['일','월','화','수','목','금','토'];
 const LV_KO = {beginner:'초급',intermediate:'중급',advanced:'고급'};
 
 const DEFAULTS = {
-  key:'', model:'gemini-flash-latest', name:'', topics:'',
+  key:'', model:'gemini-2.5-flash', name:'', topics:'',
   lv:{en:'intermediate', ja:'beginner'},
   time:'21:00', days:['off','en','ja','en','ja','en','off'], len:5,
   rate:0.95, voice:{en:'', ja:''}, fname:{en:'Emma', ja:'ユイ'}
 };
 let S = load('mc_settings', DEFAULTS);
 S = Object.assign(structuredClone(DEFAULTS), S);
+if(S.model==='gemini-flash-latest') S.model = 'gemini-2.5-flash';
 let H = load('mc_history', []);          // [{id,lang,date,dur,turns:[{r,t}],report}]
 let RANG = load('mc_rang', {});          // {date: true} 오늘 이미 울렸는지
 
@@ -498,14 +503,74 @@ function testVoice(){
 }
 
 /* ---------------- GEMINI ---------------- */
-async function gemini(body){
-  if(!S.key) throw new Error('NOKEY');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(S.model||'gemini-flash-latest')}:generateContent`;
-  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':S.key}, body:JSON.stringify(body)});
+const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+let lastErr = null;
+
+async function rawGemini(model, body){
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  let r;
+  try{
+    r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':S.key.trim()}, body:JSON.stringify(body)});
+  }catch(e){ const er = new Error('NETWORK: '+e.message); er.kind='network'; throw er; }
   const j = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(j?.error?.message || ('HTTP '+r.status));
-  const txt = j?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
-  try{ return JSON.parse(txt); }catch(e){ const m = txt.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new Error('응답을 읽지 못했어요'); }
+  if(!r.ok){
+    const msg = j?.error?.message || ('HTTP '+r.status);
+    const er = new Error(msg); er.status = r.status; er.code = j?.error?.status || '';
+    if(r.status===404 || /not found|not supported|is not available|does not exist/i.test(msg)) er.kind='model';
+    else if(/api key|API_KEY|permission|unregistered callers/i.test(msg) || r.status===403 && !/quota/i.test(msg)) er.kind='key';
+    else if(r.status===429 || /quota|rate/i.test(msg)) er.kind='quota';
+    else if(r.status>=500) er.kind='server';
+    else if(r.status===400 && /schema|response_schema|responseSchema|propertyOrdering|mime/i.test(msg)) er.kind='schema';
+    else if(/location is not supported|User location/i.test(msg)) er.kind='region';
+    else er.kind='other';
+    throw er;
+  }
+  const cand = j?.candidates?.[0];
+  const txt = cand?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join('') || '';
+  if(!txt){ const er = new Error('빈 응답 ('+(cand?.finishReason || j?.promptFeedback?.blockReason || '이유 모름')+')'); er.kind='empty'; throw er; }
+  try{ return JSON.parse(txt); }
+  catch(e){ const m = txt.match(/\{[\s\S]*\}/); if(m){ try{ return JSON.parse(m[0]); }catch(_){} } const er = new Error('응답을 JSON으로 읽지 못했어요'); er.kind='parse'; throw er; }
+}
+
+async function gemini(body){
+  if(!S.key) throw Object.assign(new Error('API 키가 없어요'), {kind:'key'});
+  const models = [S.model || 'gemini-2.5-flash', ...FALLBACK_MODELS.filter(m=>m!==S.model)];
+  let err;
+  for(const model of models){
+    for(let attempt=0; attempt<2; attempt++){
+      try{
+        const b = attempt===1 && err?.kind==='schema' ? stripSchema(body) : body;
+        const out = await rawGemini(model, b);
+        if(model !== S.model){ S.model = model; save('mc_settings', S); toast(`모델을 ${model}(으)로 바꿨어요`); }
+        lastErr = null;
+        return out;
+      }catch(e){
+        err = e;
+        if(e.kind==='server' || e.kind==='schema' || e.kind==='parse' || e.kind==='empty'){ await new Promise(r=>setTimeout(r, 800)); continue; }
+        break;
+      }
+    }
+    if(!['model','schema','parse','empty','server','quota'].includes(err.kind)) break; // 키·네트워크 문제는 모델을 바꿔도 소용없음
+  }
+  lastErr = err;
+  throw err;
+}
+function stripSchema(body){
+  const b = structuredClone(body);
+  if(b.generationConfig){ delete b.generationConfig.responseSchema; }
+  return b;
+}
+function explainErr(e){
+  const why = {
+    key:'API 키 문제예요. 설정에서 키를 다시 붙여 넣어 보세요. (앞뒤 공백, 다른 프로젝트의 키, 웹사이트 제한이 걸린 키인지 확인)',
+    quota:'무료 사용 한도를 넘었어요. 1분쯤 뒤에 다시 하거나, 내일 다시 해 보세요.',
+    model:'모델 이름이 맞지 않아요. 설정에서 모델을 gemini-2.5-flash 로 바꿔 보세요.',
+    network:'인터넷 연결이나 브라우저가 요청을 막았어요. 와이파이/데이터를 확인해 보세요.',
+    server:'Gemini 서버가 잠깐 바빠요. 조금 뒤에 다시 해 보세요.',
+    region:'이 지역에서 Gemini API를 쓸 수 없다고 해요.',
+    schema:'응답 형식 설정이 거절됐어요.',
+  }[e?.kind] || '알 수 없는 오류예요.';
+  return why;
 }
 
 function persona(lang){
@@ -597,8 +662,8 @@ async function aiTurn(parts, isOpener=false){
     });
   }catch(e){
     if(!C || C.ended) return;
-    const msg = e.message==='NOKEY' ? 'API 키가 없어요' : e.message;
-    addSys('연결이 잠깐 끊겼어요: ' + msg.slice(0,80));
+    $('#log').insertAdjacentHTML('beforeend', `<div class="hint" style="font-size:13px;line-height:1.5">⚠️ <b style="font-weight:400">${esc(explainErr(e))}</b><br><small style="color:var(--sub);word-break:break-all">원래 메시지: ${esc(e.message)}</small></div>`);
+    scrollLog();
     setState('listening'); Mic.resume(); return;
   }
   if(!C || C.ended) return;
@@ -809,6 +874,18 @@ function openReport(id){ const c = H.find(x=>x.id===id); if(!c) return; show('re
 function deleteCall(id){ if(!confirm('이 통화 기록을 지울까요?')) return; H = H.filter(x=>x.id!==id); save('mc_history', H); show('home'); }
 
 /* ---------------- SETTINGS ---------------- */
+async function testConn(){
+  S.key = $('#sKey').value.trim(); S.model = $('#sModel').value.trim() || 'gemini-2.5-flash';
+  const box = $('#connRes'); box.textContent = '확인하는 중…';
+  try{
+    const r = await gemini({contents:[{role:'user',parts:[{text:'Reply with JSON {"ok":true}'}]}], generationConfig:{responseMimeType:'application/json'}});
+    $('#sModel').value = S.model; save('mc_settings', S);
+    box.innerHTML = `✅ 연결 성공! (모델: ${esc(S.model)})`;
+  }catch(e){
+    box.innerHTML = `❌ ${esc(explainErr(e))}<br><span style="word-break:break-all">원래 메시지: ${esc(e.message)}</span>`;
+  }
+}
+
 let tmpDays = [];
 function openSettings(){
   $('#sKey').value = S.key; $('#sModel').value = S.model; $('#sName').value = S.name; $('#sTopics').value = S.topics;
@@ -824,7 +901,7 @@ function renderDays(){
 function cycleDay(i){ tmpDays[i] = {en:'ja', ja:'off', off:'en'}[tmpDays[i]]; renderDays(); }
 function readVoiceSelects(){ S.voice = {en:$('#sVoiceEn').value, ja:$('#sVoiceJa').value}; S.rate = parseFloat($('#sRate').value); }
 function saveSettings(silent){
-  S.key = $('#sKey').value.trim(); S.model = $('#sModel').value.trim() || 'gemini-flash-latest';
+  S.key = $('#sKey').value.trim(); S.model = $('#sModel').value.trim() || 'gemini-2.5-flash';
   S.name = $('#sName').value.trim(); S.topics = $('#sTopics').value.trim();
   S.lv = {en:$('#sLvEn').value, ja:$('#sLvJa').value};
   const oldTime = S.time; S.time = $('#sTime').value || '21:00';

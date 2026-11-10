@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>밍콜 · AI 전화 회화</title>
+<meta name="theme-color" content="#f7fbff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="밍콜">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2c3440; --sub:#7a8594; --line:#dfe7f0; --grid:#e9f1f8;
+  --sky:#8ecdf2; --sky-d:#4fa6d8; --sky-l:#e6f5fd;
+  --pink:#f6b8c8; --pink-d:#e88aa3; --pink-l:#fdeef2;
+  --mint:#a9e2cf; --mint-l:#e9f8f2; --butter:#fbe7a6;
+  --red:#f0746f; --green:#5cc79a; --paper:#fbfdff;
+  --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:"Gowun Dodum","Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;overscroll-behavior:none;
+}
+.ja{font-family:"Zen Maru Gothic","Gowun Dodum",sans-serif}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:calc(var(--safe-t) + 14px) 18px calc(var(--safe-b) + 14px);overflow-y:auto}
+.screen.on{display:flex}
+.hidden{display:none!important}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:8px;font-size:22px;letter-spacing:-.5px}
+.brand b{font-weight:400}
+.brand .dot{width:30px;height:30px;border-radius:50%;background:var(--sky-l);border:1px solid var(--sky);display:grid;place-items:center;font-size:16px}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-size:18px}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+.label{font-size:12px;color:var(--sub);letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink)}
+
+/* streak */
+.streak{display:flex;align-items:flex-end;justify-content:space-between}
+.streak .num{font-size:40px;line-height:1}
+.streak .num small{font-size:15px;color:var(--sub);margin-left:4px}
+.week{display:flex;gap:6px;margin-top:14px}
+.week div{flex:1;text-align:center;font-size:11px;color:var(--sub)}
+.week i{display:block;height:28px;border-radius:9px;border:1px dashed var(--line);margin-top:4px;font-style:normal;line-height:26px;font-size:13px}
+.week i.en{background:var(--sky-l);border:1px solid var(--sky)}
+.week i.ja{background:var(--pink-l);border:1px solid var(--pink)}
+.week i.today{outline:2px solid var(--butter);outline-offset:1px}
+
+/* friends */
+.friends{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.friend{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;text-align:left;position:relative}
+.friend .av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:22px;margin-bottom:10px}
+.friend.en .av{background:var(--sky-l);border:1px solid var(--sky)}
+.friend.ja .av{background:var(--pink-l);border:1px solid var(--pink)}
+.friend .nm{font-size:17px}
+.friend .ds{font-size:12px;color:var(--sub);margin-top:2px}
+.friend .call{position:absolute;right:12px;top:14px;width:36px;height:36px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:16px}
+
+.next{display:flex;align-items:center;gap:12px}
+.next .clock{font-size:26px}
+.next .t{font-size:15px}.next .s{font-size:12px;color:var(--sub);margin-top:2px}
+
+.hist-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px dashed var(--line)}
+.hist-item:first-of-type{border-top:none}
+.hist-item .tag{font-size:11px;padding:3px 8px;border-radius:20px}
+.tag.en{background:var(--sky-l);color:var(--sky-d)}.tag.ja{background:var(--pink-l);color:var(--pink-d)}
+.hist-item .tx{flex:1;min-width:0}
+.hist-item .tx div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.hist-item .tx small{color:var(--sub);font-size:12px}
+.empty{color:var(--sub);font-size:13px;text-align:center;padding:10px 0}
+
+/* incoming */
+#incoming{align-items:center;justify-content:space-between;text-align:center;background:linear-gradient(180deg,#f2faff 0%,#fff5f8 100%)}
+.ring-av{width:140px;height:140px;border-radius:50%;display:grid;place-items:center;font-size:62px;position:relative;margin:30px auto 18px;background:#fff;border:1px solid var(--line)}
+.ring-av::before,.ring-av::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:1.5px solid var(--sky);animation:pulse 1.8s infinite;opacity:0}
+.ring-av::after{animation-delay:.9s}
+@keyframes pulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.35);opacity:0}}
+.big-name{font-size:30px}
+.big-sub{color:var(--sub);margin-top:6px;font-size:14px}
+.inc-btns{display:flex;justify-content:space-around;width:100%;max-width:320px;margin-bottom:30px}
+.round{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:28px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.round.red{background:var(--red)}.round.green{background:var(--green);animation:wiggle 1.2s infinite}
+@keyframes wiggle{0%,60%,100%{transform:rotate(0)}10%,30%,50%{transform:rotate(-12deg)}20%,40%{transform:rotate(12deg)}}
+.round-l{font-size:13px;color:var(--sub);margin-top:8px}
+
+/* call */
+#call{padding-bottom:calc(var(--safe-b) + 10px)}
+.call-head{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.call-head .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:#fff;border:1px solid var(--line);position:relative}
+.call-head .av.talk::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--sky);animation:pulse 1.2s infinite}
+.call-head .nm{font-size:18px}
+.call-head .st{font-size:12px;color:var(--sub)}
+.timer{margin-left:auto;font-variant-numeric:tabular-nums;font-size:14px;color:var(--sub);background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:20px}
+#log{flex:1;overflow-y:auto;padding:14px 2px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.b{max-width:86%;padding:10px 13px;border-radius:16px;font-size:16px;line-height:1.5;position:relative}
+.b.ai{align-self:flex-start;background:#fff;border:1px solid var(--line);border-top-left-radius:4px}
+.b.me{align-self:flex-end;background:var(--sky-l);border:1px solid var(--sky);border-top-right-radius:4px}
+.lang-ja .b.me{background:var(--pink-l);border-color:var(--pink)}
+.b .rd{font-size:12px;color:var(--sub);margin-top:4px}
+.b .ko{font-size:13px;color:var(--sub);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.hide-ko .b .ko{display:none}
+.fix{align-self:flex-end;max-width:86%;background:var(--mint-l);border:1px dashed var(--mint);border-radius:14px;padding:8px 12px;font-size:14px;line-height:1.45}
+.fix b{font-weight:400;color:#2f9d76}
+.fix small{display:block;color:var(--sub);font-size:12px;margin-top:3px}
+.hint{align-self:center;max-width:92%;background:#fffaf0;border:1px dashed var(--butter);border-radius:14px;padding:8px 12px;font-size:14px}
+.sys{align-self:center;font-size:12px;color:var(--sub);background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:20px}
+
+.meter{height:40px;display:flex;align-items:center;justify-content:center;gap:4px;margin:6px 0}
+.meter span{width:5px;border-radius:3px;background:var(--sky);height:6px;transition:height .08s}
+.lang-ja .meter span{background:var(--pink)}
+.status-line{text-align:center;font-size:13px;color:var(--sub);min-height:18px}
+.ctrls{display:flex;justify-content:space-around;align-items:flex-start;margin-top:10px}
+.ctrl{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--sub);width:64px}
+.ctrl .c{width:54px;height:54px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:20px}
+.ctrl.active .c{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ctrl .c.red{background:var(--red);color:#fff;border-color:var(--red)}
+.ctrl .c.send{background:var(--green);color:#fff;border-color:var(--green)}
+.typebar{display:flex;gap:8px;margin-top:10px}
+.typebar input{flex:1;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
+.typebar button{background:var(--ink);color:#fff;border-radius:14px;padding:0 16px}
+
+/* report */
+.rep-h{font-size:22px;margin:4px 0 4px}
+.rep-s{color:var(--sub);font-size:13px;margin-bottom:14px}
+.stars{font-size:22px;letter-spacing:2px;color:#f3c64d}
+.corr{padding:10px 0;border-top:1px dashed var(--line);font-size:14px;line-height:1.5}
+.corr:first-of-type{border-top:none}
+.corr .x{color:var(--sub);text-decoration:line-through;text-decoration-color:var(--red)}
+.corr .o{color:#2f9d76}
+.corr small{display:block;color:var(--sub);font-size:12px}
+.expr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line)}
+.expr:first-of-type{border-top:none}
+.expr .e{font-size:15px}.expr small{display:block;color:var(--sub);font-size:12px}
+.say{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;flex:none}
+.btn{display:block;width:100%;padding:14px;border-radius:16px;background:var(--ink);color:#fff;font-size:16px;margin-top:6px}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:50px 0;color:var(--sub)}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--sky-l);border-top-color:var(--sky-d);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* settings */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.field input,.field select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff}
+.field .help{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
+.field .help a{color:var(--sky-d)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.days button{border:1px solid var(--line);border-radius:10px;padding:8px 0;font-size:12px;background:#fff;line-height:1.4}
+.days button.en{background:var(--sky-l);border-color:var(--sky)}
+.days button.ja{background:var(--pink-l);border-color:var(--pink)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 24px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-size:14px;z-index:99;max-width:90%;text-align:center;display:none}
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<section id="home" class="screen on">
+  <div class="top">
+    <div class="brand"><span class="dot">🐿️</span><b>밍콜</b></div>
+    <button class="icon-btn" onclick="openSettings()" aria-label="설정">⚙️</button>
+  </div>
+
+  <div class="card">
+    <div class="label">매일 통화 기록</div>
+    <div class="streak">
+      <div class="num" id="streakNum">0<small>일 연속</small></div>
+      <div style="font-size:13px;color:var(--sub);text-align:right" id="totalTxt">총 0번 통화</div>
+    </div>
+    <div class="week" id="week"></div>
+  </div>
+
+  <div class="card next" id="nextCard">
+    <div class="clock">⏰</div>
+    <div><div class="t" id="nextT">-</div><div class="s" id="nextS">-</div></div>
+  </div>
+
+  <div class="friends">
+    <button class="friend en" onclick="startOutgoing('en')">
+      <div class="av">🇺🇸</div><div class="nm" id="fnEn">Emma</div><div class="ds">영어 · <span id="lvEn"></span></div>
+      <span class="call">📞</span>
+    </button>
+    <button class="friend ja" onclick="startOutgoing('ja')">
+      <div class="av">🇯🇵</div><div class="nm ja" id="fnJa">ユイ</div><div class="ds">일본어 · <span id="lvJa"></span></div>
+      <span class="call">📞</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="label">지난 통화</div>
+    <div id="hist"></div>
+  </div>
+</section>
+
+<!-- ============ INCOMING ============ -->
+<section id="incoming" class="screen">
+  <div style="margin-top:40px">
+    <div class="big-sub">밍콜 음성통화</div>
+    <div class="ring-av" id="incAv">🇺🇸</div>
+    <div class="big-name" id="incName">Emma</div>
+    <div class="big-sub" id="incSub">오늘의 영어 통화</div>
+  </div>
+  <div class="inc-btns">
+    <div><button class="round red" onclick="declineCall()">✕</button><div class="round-l">거절</div></div>
+    <div><button class="round green" onclick="answerCall()">📞</button><div class="round-l">받기</div></div>
+  </div>
+</section>
+
+<!-- ============ CALL ============ -->
+<section id="call" class="screen">
+  <div class="call-head">
+    <div class="av" id="callAv">🇺🇸</div>
+    <div><div class="nm" id="callName">Emma</div><div class="st" id="callSt">연결 중…</div></div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+  <div id="log"></div>
+  <div class="meter" id="meter"></div>
+  <div class="status-line" id="statusLine"></div>
+  <div class="typebar hidden" id="typebar">
+    <input id="typeIn" placeholder="말 대신 입력하기" enterkeyhint="send">
+    <button onclick="sendTyped()">보내기</button>
+  </div>
+  <div class="ctrls">
+    <button class="ctrl" id="muteBtn" onclick="toggleMute()"><span class="c">🎙️</span>음소거</button>
+    <button class="ctrl" onclick="askHint()"><span class="c">💡</span>힌트</button>
+    <button class="ctrl" id="sendBtn" onclick="forceSend()"><span class="c send">➤</span>보내기</button>
+    <button class="ctrl" id="koBtn" onclick="toggleKo()"><span class="c">가</span>번역</button>
+    <button class="ctrl" onclick="toggleType()"><span class="c">⌨️</span>입력</button>
+  </div>
+  <div class="ctrls" style="margin-top:12px">
+    <button class="ctrl" onclick="hangUp()" style="width:auto"><span class="c red" style="width:64px;height:64px;font-size:24px">📞</span>끊기</button>
+  </div>
+</section>
+
+<!-- ============ REPORT ============ -->
+<section id="report" class="screen">
+  <div class="top">
+    <div class="brand"><span class="dot">📝</span><b>통화 리포트</b></div>
+    <button class="icon-btn" onclick="show('home')">✕</button>
+  </div>
+  <div id="repBody"></div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="settings" class="screen">
+  <div class="top">
+    <div class="brand"><span class="dot">⚙️</span><b>설정</b></div>
+    <button class="icon-btn" onclick="saveSettings()">✓</button>
+  </div>
+
+  <div class="card">
+    <div class="label">Gemini 연결</div>
+    <div class="field">
+      <label>API 키</label>
+      <input id="sKey" type="password" autocomplete="off" placeholder="AIza…">
+      <div class="help">키는 이 폰에만 저장돼요. <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>에서 무료로 받을 수 있어요.</div>
+    </div>
+    <div class="field">
+      <label>모델</label>
+      <input id="sModel" autocomplete="off">
+      <div class="help">기본값 gemini-flash-latest (항상 최신 Flash). 오류가 나면 gemini-2.5-flash 로 바꿔 보세요.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">나</div>
+    <div class="field"><label>친구가 부를 내 이름</label><input id="sName" placeholder="예: Hyunju"></div>
+    <div class="row2">
+      <div class="field"><label>영어 수준</label>
+        <select id="sLvEn"><option value="beginner">초급</option><option value="intermediate">중급</option><option value="advanced">고급</option></select></div>
+      <div class="field"><label>일본어 수준</label>
+        <select id="sLvJa"><option value="beginner">초급</option><option value="intermediate">중급</option><option value="advanced">고급</option></select></div>
+    </div>
+    <div class="field"><label>요즘 이야기하고 싶은 것 (선택)</label><input id="sTopics" placeholder="예: 학교 생활, 여행, 드라마"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">전화 오는 시간</div>
+    <div class="field"><label>시간</label><input id="sTime" type="time"></div>
+    <div class="field">
+      <label>요일별 친구 (눌러서 바꾸기: 영어 → 일본어 → 쉬기)</label>
+      <div class="days" id="sDays"></div>
+    </div>
+    <div class="field">
+      <label>통화 길이 목표</label>
+      <select id="sLen"><option value="3">3분</option><option value="5">5분</option><option value="10">10분</option></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">목소리</div>
+    <div class="row2">
+      <div class="field"><label>영어 목소리</label><select id="sVoiceEn"></select></div>
+      <div class="field"><label>일본어 목소리</label><select id="sVoiceJa"></select></div>
+    </div>
+    <div class="field"><label>말하기 속도 <span id="rateV"></span></label>
+      <input id="sRate" type="range" min="0.6" max="1.2" step="0.05" oninput="rateV.textContent=this.value+'x'"></div>
+    <div class="row2">
+      <div class="field"><label>영어 친구 이름</label><input id="sFnEn"></div>
+      <div class="field"><label>일본어 친구 이름</label><input id="sFnJa"></div>
+    </div>
+    <button class="btn ghost" onclick="testVoice()">🔊 목소리 들어보기</button>
+  </div>
+
+  <button class="btn" onclick="saveSettings()">저장</button>
+  <button class="btn ghost" onclick="testIncoming()">📞 전화 오는 화면 미리보기</button>
+  <div style="height:20px"></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   밍콜 — AI 전화 회화 (영어 · 일본어)
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const DAYS = ['일','월','화','수','목','금','토'];
+const LV_KO = {beginner:'초급',intermediate:'중급',advanced:'고급'};
+
+const DEFAULTS = {
+  key:'', model:'gemini-flash-latest', name:'', topics:'',
+  lv:{en:'intermediate', ja:'beginner'},
+  time:'21:00', days:['off','en','ja','en','ja','en','off'], len:5,
+  rate:0.95, voice:{en:'', ja:''}, fname:{en:'Emma', ja:'ユイ'}
+};
+let S = load('mc_settings', DEFAULTS);
+S = Object.assign(structuredClone(DEFAULTS), S);
+let H = load('mc_history', []);          // [{id,lang,date,dur,turns:[{r,t}],report}]
+let RANG = load('mc_rang', {});          // {date: true} 오늘 이미 울렸는지
+
+function load(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? structuredClone(d);}catch(e){ return structuredClone(d);} }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function toast(msg, ms=2600){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none', ms); }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); if(id==='home') renderHome(); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ymd(d=new Date()){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const AV = {en:'🇺🇸', ja:'🇯🇵'};
+
+/* ---------------- HOME ---------------- */
+function renderHome(){
+  $('#fnEn').textContent = S.fname.en; $('#fnJa').textContent = S.fname.ja;
+  $('#lvEn').textContent = LV_KO[S.lv.en]; $('#lvJa').textContent = LV_KO[S.lv.ja];
+
+  // streak
+  const done = {}; H.forEach(c=>{ if(c.turns.some(t=>t.r==='me')) (done[c.date] ||= new Set()).add(c.lang); });
+  let streak = 0, d = new Date();
+  if(!done[ymd(d)]) d.setDate(d.getDate()-1);
+  while(done[ymd(d)]){ streak++; d.setDate(d.getDate()-1); }
+  $('#streakNum').innerHTML = streak + '<small>일 연속</small>';
+  $('#totalTxt').textContent = '총 ' + H.filter(c=>c.turns.some(t=>t.r==='me')).length + '번 통화';
+
+  // this week (Sun~Sat)
+  const now = new Date(), start = new Date(now); start.setDate(now.getDate()-now.getDay());
+  let wk = '';
+  for(let i=0;i<7;i++){
+    const dd = new Date(start); dd.setDate(start.getDate()+i);
+    const set = done[ymd(dd)], cls = set ? (set.has('ja') && !set.has('en') ? 'ja' : 'en') : '';
+    const mark = set ? (set.size>1 ? '🇺🇸🇯🇵' : (set.has('en')?'🇺🇸':'🇯🇵')) : '';
+    wk += `<div>${DAYS[i]}<i class="${cls} ${ymd(dd)===ymd()?'today':''}">${mark}</i></div>`;
+  }
+  $('#week').innerHTML = wk;
+
+  // next call
+  const nx = nextScheduled();
+  if(nx){
+    const isToday = ymd(nx.at)===ymd();
+    $('#nextT').textContent = `${isToday?'오늘':DAYS[nx.at.getDay()]+'요일'} ${S.time}에 ${S.fname[nx.lang]}에게서 전화가 와요`;
+    $('#nextS').textContent = '앱을 켜 두면 그 시간에 전화 화면이 떠요';
+  } else {
+    $('#nextT').textContent = '예약된 전화가 없어요'; $('#nextS').textContent = '설정에서 요일과 시간을 골라 주세요';
+  }
+
+  // history
+  const list = H.filter(c=>c.turns.some(t=>t.r==='me')).slice(-8).reverse();
+  $('#hist').innerHTML = list.length ? list.map(c=>{
+    const first = c.report?.summary_ko || (c.turns.find(t=>t.r==='me')?.t ?? '');
+    return `<div class="hist-item" onclick="openReport('${c.id}')">
+      <span class="tag ${c.lang}">${c.lang==='en'?'영어':'일본어'}</span>
+      <div class="tx"><div>${esc(first)}</div><small>${c.date.slice(5).replace('-','/')} · ${Math.max(1,Math.round(c.dur/60))}분</small></div>
+      <span style="color:var(--sub)">›</span></div>`;
+  }).join('') : '<div class="empty">아직 통화 기록이 없어요. 친구에게 먼저 걸어 볼까요?</div>';
+}
+
+function nextScheduled(){
+  if(!S.days.some(x=>x!=='off')) return null;
+  const [h,m] = S.time.split(':').map(Number), now = new Date();
+  for(let i=0;i<8;i++){
+    const d = new Date(now); d.setDate(now.getDate()+i); d.setHours(h,m,0,0);
+    const lang = S.days[d.getDay()];
+    if(lang==='off') continue;
+    if(i===0 && (RANG[ymd(d)] || calledToday(lang))) continue;
+    if(i===0 && d < now - 30*60*1000) continue;
+    return {at:d, lang};
+  }
+  return null;
+}
+function calledToday(lang){ return H.some(c=>c.date===ymd() && c.lang===lang && c.turns.some(t=>t.r==='me')); }
+
+/* ---------------- SCHEDULER (앱이 열려 있을 때) ---------------- */
+function checkSchedule(){
+  if(!$('#home').classList.contains('on')) return;
+  const now = new Date(), lang = S.days[now.getDay()];
+  if(lang==='off' || RANG[ymd()] || calledToday(lang)) return;
+  const [h,m] = S.time.split(':').map(Number);
+  const at = new Date(now); at.setHours(h,m,0,0);
+  const diff = now - at;
+  if(diff >= 0 && diff < 30*60*1000){ RANG[ymd()] = true; save('mc_rang', RANG); ringIncoming(lang); }
+}
+setInterval(checkSchedule, 15000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkSchedule(); });
+
+/* ---------------- INCOMING ---------------- */
+let incomingLang = 'en', ringTimer = null, ringCtx = null;
+function ringIncoming(lang){
+  incomingLang = lang;
+  $('#incAv').textContent = AV[lang]; $('#incName').textContent = S.fname[lang];
+  $('#incName').className = 'big-name' + (lang==='ja'?' ja':'');
+  $('#incSub').textContent = lang==='en' ? '오늘의 영어 통화' : '오늘의 일본어 통화';
+  show('incoming');
+  playRing();
+}
+function playRing(){
+  stopRing();
+  try{
+    ringCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const beep = () => {
+      if(!ringCtx) return;
+      const t = ringCtx.currentTime;
+      [0,0.25].forEach(off=>{
+        const o = ringCtx.createOscillator(), g = ringCtx.createGain();
+        o.type='sine'; o.frequency.value = 880; o.connect(g); g.connect(ringCtx.destination);
+        g.gain.setValueAtTime(0, t+off); g.gain.linearRampToValueAtTime(.18, t+off+.02); g.gain.linearRampToValueAtTime(0, t+off+.2);
+        o.start(t+off); o.stop(t+off+.22);
+      });
+      if(navigator.vibrate) navigator.vibrate([300,150,300]);
+    };
+    beep(); ringTimer = setInterval(beep, 2200);
+  }catch(e){}
+}
+function stopRing(){ clearInterval(ringTimer); ringTimer=null; if(ringCtx){ try{ringCtx.close()}catch(e){} ringCtx=null; } if(navigator.vibrate) navigator.vibrate(0); }
+function declineCall(){ stopRing(); show('home'); toast('다음에 또 전화할게요 👋'); }
+function answerCall(){ stopRing(); startCall(incomingLang); }
+function startOutgoing(lang){ startCall(lang); }
+function testIncoming(){ saveSettings(true); ringIncoming(S.days[new Date().getDay()]==='ja'?'ja':'en'); }
+
+/* ---------------- TTS ---------------- */
+let voices = [];
+function loadVoices(){
+  voices = speechSynthesis.getVoices();
+  const fill = (sel, prefix, cur) => {
+    const vs = voices.filter(v=>v.lang.replace('_','-').toLowerCase().startsWith(prefix));
+    sel.innerHTML = '<option value="">자동</option>' + vs.map(v=>`<option value="${esc(v.name)}" ${v.name===cur?'selected':''}>${esc(v.name)}</option>`).join('');
+  };
+  fill($('#sVoiceEn'), 'en', S.voice.en); fill($('#sVoiceJa'), 'ja', S.voice.ja);
+}
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(lang){
+  const name = S.voice[lang];
+  if(name){ const v = voices.find(v=>v.name===name); if(v) return v; }
+  const pref = lang==='en' ? ['Samantha','Google US English','Microsoft Aria','Ava','Allison'] : ['Kyoko','Google 日本語','O-Ren','Microsoft Nanami'];
+  for(const p of pref){ const v = voices.find(v=>v.name.includes(p)); if(v) return v; }
+  return voices.find(v=>v.lang.replace('_','-').toLowerCase().startsWith(lang==='en'?'en-us':'ja')) || voices.find(v=>v.lang.toLowerCase().startsWith(lang));
+}
+function speak(text, lang){
+  return new Promise(res=>{
+    if(!('speechSynthesis' in window) || !text){ res(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang==='en' ? 'en-US' : 'ja-JP';
+    const v = pickVoice(lang); if(v) u.voice = v;
+    let rate = S.rate; if(S.lv[lang]==='beginner') rate -= .08;
+    u.rate = Math.max(.5, rate);
+    let done = false; const fin = ()=>{ if(!done){ done=true; res(); } };
+    u.onend = fin; u.onerror = fin;
+    // 안전장치: onend가 안 오는 브라우저 대비
+    setTimeout(fin, 1500 + text.length * 110 / u.rate);
+    speechSynthesis.speak(u);
+  });
+}
+function testVoice(){
+  readVoiceSelects();
+  speak("Hi! It's me. How was your day today?", 'en').then(()=>speak('もしもし、今日はどんな一日だった？', 'ja'));
+}
+
+/* ---------------- GEMINI ---------------- */
+async function gemini(body){
+  if(!S.key) throw new Error('NOKEY');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(S.model||'gemini-flash-latest')}:generateContent`;
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':S.key}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j?.error?.message || ('HTTP '+r.status));
+  const txt = j?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
+  try{ return JSON.parse(txt); }catch(e){ const m = txt.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new Error('응답을 읽지 못했어요'); }
+}
+
+function persona(lang){
+  const lv = S.lv[lang], me = S.name || 'my friend';
+  const topics = S.topics ? `Things they like to talk about lately: ${S.topics}.` : '';
+  const lvGuide = {
+    beginner: lang==='en' ? 'Use very simple words and short sentences (A2). Speak slowly and clearly. One question at a time.' : 'やさしい日本語（N5〜N4程度）で、短い文で話す。です・ます調は使わず、やさしいタメ口。漢字は少なめ。一度に質問は一つ。',
+    intermediate: lang==='en' ? 'Use natural everyday English (B1-B2) with some common idioms.' : '自然な日常会話の日本語（N3〜N2程度）。タメ口で。',
+    advanced: lang==='en' ? 'Speak like a native friend, with natural idioms, slang and nuance (C1).' : 'ネイティブの友達同士のような自然な日本語。口語表現もOK。'
+  }[lv];
+  const who = lang==='en'
+    ? `You are ${S.fname.en}, a warm, curious 28-year-old American friend living in Seattle. You are on a PHONE CALL with ${me}, a Korean high-school teacher who is practicing English.`
+    : `あなたは${S.fname.ja}、東京に住む明るくて優しい27歳の日本人の友達です。韓国の高校の先生である${me}と電話しています。${me}は日本語を練習中です。`;
+  return `${who}
+${lvGuide}
+${topics}
+Rules:
+- This is a spoken phone call. Keep each reply SHORT: 1-3 sentences, then usually ask a follow-up question. No emojis, no lists, no markdown.
+- Stay fully in character and speak ONLY in ${lang==='en'?'English':'Japanese'} in "reply" (never Korean there), even if they speak Korean. If they speak Korean, gently help them say it in ${lang==='en'?'English':'Japanese'}.
+- React to what they actually said, share small things about your own life, keep the conversation flowing like a real friend.
+- After about ${S.len} minutes of talk, start wrapping up naturally.
+For each of their turns, return JSON:
+- heard: exactly what they said (transcribe the audio faithfully, keep their mistakes). If the audio is silent or unclear, heard = "" and reply asks them to repeat naturally.
+- better: a more natural ${lang==='en'?'English':'Japanese'} version of what they said, ONLY if there was a real mistake or a clearly more natural way. Otherwise "".
+- tip_ko: if better is not empty, one short Korean explanation (why). Otherwise "".
+- reply: your spoken reply.
+- reading: ${lang==='ja'?'reply written fully in hiragana (for reading help).':'"" (empty).'}
+- reply_ko: Korean translation of reply.`;
+}
+const TURN_SCHEMA = {type:'OBJECT', properties:{
+  heard:{type:'STRING'}, better:{type:'STRING'}, tip_ko:{type:'STRING'},
+  reply:{type:'STRING'}, reading:{type:'STRING'}, reply_ko:{type:'STRING'}
+}, required:['heard','better','tip_ko','reply','reading','reply_ko'], propertyOrdering:['heard','better','tip_ko','reply','reading','reply_ko']};
+
+/* ---------------- CALL STATE ---------------- */
+let C = null;   // current call
+function resetCall(lang){
+  C = { id: Date.now().toString(36), lang, date: ymd(), start: Date.now(), turns: [], hist: [],
+        state: 'idle', muted: false, ended: false, timerH: null };
+}
+
+async function startCall(lang){
+  if(!S.key){ toast('설정에서 Gemini API 키를 먼저 넣어 주세요'); openSettings(); return; }
+  resetCall(lang);
+  document.body.classList.toggle('lang-ja', lang==='ja');
+  $('#callAv').textContent = AV[lang]; $('#callName').textContent = S.fname[lang];
+  $('#callName').className = 'nm' + (lang==='ja'?' ja':'');
+  $('#log').innerHTML = ''; $('#log').classList.add('hide-ko'); $('#koBtn').classList.remove('active');
+  $('#muteBtn').classList.remove('active'); $('#typebar').classList.add('hidden');
+  $('#timer').textContent = '00:00';
+  show('call');
+  // iOS: 사용자 터치 안에서 TTS 잠금 해제
+  try{ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); }catch(e){}
+  setStatus('연결 중…');
+
+  try{ await Mic.start(); }
+  catch(e){ addSys('마이크를 쓸 수 없어요. 입력 버튼으로 대화할 수 있어요.'); $('#typebar').classList.remove('hidden'); }
+
+  C.timerH = setInterval(()=>{ const s = Math.floor((Date.now()-C.start)/1000); $('#timer').textContent = String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }, 1000);
+
+  // 친구가 먼저 인사
+  const h = new Date().getHours();
+  const opener = `(The call just connected. ${S.fname[lang]} called ${S.name||'their friend'} first. It is ${h}:00 in Korea. Greet them warmly like a friend calling, mention something casual, and ask how their day was. heard must be "".)`;
+  await aiTurn([{text: opener}], true);
+}
+
+function setStatus(t){ $('#statusLine').textContent = t; }
+function setState(st){
+  if(!C) return; C.state = st;
+  $('#callAv').classList.toggle('talk', st==='speaking');
+  const nm = S.fname[C.lang];
+  const map = { listening: C.muted ? '음소거 중' : '듣고 있어요 · 편하게 말해 보세요', recording:'듣는 중… 말이 끝나면 자동으로 보내요', thinking:`${nm}이(가) 생각 중…`, speaking:`${nm}이(가) 말하는 중` };
+  $('#callSt').textContent = st==='speaking' ? '말하는 중' : '통화 중';
+  setStatus(map[st] || '');
+}
+function scrollLog(){ const l = $('#log'); requestAnimationFrame(()=> l.scrollTop = l.scrollHeight); }
+function addSys(t){ $('#log').insertAdjacentHTML('beforeend', `<div class="sys">${esc(t)}</div>`); scrollLog(); }
+
+async function aiTurn(parts, isOpener=false){
+  if(!C || C.ended) return;
+  setState('thinking');
+  const contents = [...C.hist, {role:'user', parts}];
+  let res;
+  try{
+    res = await gemini({
+      systemInstruction:{parts:[{text: persona(C.lang)}]},
+      contents,
+      generationConfig:{ responseMimeType:'application/json', responseSchema: TURN_SCHEMA, temperature: .9 }
+    });
+  }catch(e){
+    if(!C || C.ended) return;
+    const msg = e.message==='NOKEY' ? 'API 키가 없어요' : e.message;
+    addSys('연결이 잠깐 끊겼어요: ' + msg.slice(0,80));
+    setState('listening'); Mic.resume(); return;
+  }
+  if(!C || C.ended) return;
+
+  const heard = (res.heard||'').trim();
+  if(!isOpener && heard){
+    C.turns.push({r:'me', t:heard, better:res.better||'', tip:res.tip_ko||''});
+    C.hist.push({role:'user', parts:[{text: heard}]});
+    $('#log').insertAdjacentHTML('beforeend', `<div class="b me ${C.lang==='ja'?'ja':''}">${esc(heard)}</div>`);
+    if(res.better && res.better.trim() && res.better.trim() !== heard){
+      $('#log').insertAdjacentHTML('beforeend', `<div class="fix ${C.lang==='ja'?'ja':''}">✨ <b>${esc(res.better)}</b>${res.tip_ko?`<small>${esc(res.tip_ko)}</small>`:''}</div>`);
+    }
+  } else if(isOpener){
+    C.hist.push({role:'user', parts:[{text:'(call connected)'}]});
+  } else {
+    C.hist.push({role:'user', parts:[{text:'(unclear audio)'}]});
+  }
+  C.turns.push({r:'ai', t:res.reply});
+  C.hist.push({role:'model', parts:[{text: res.reply}]});
+  $('#log').insertAdjacentHTML('beforeend', `<div class="b ai ${C.lang==='ja'?'ja':''}">${esc(res.reply)}${res.reading && C.lang==='ja' && S.lv.ja==='beginner' ? `<div class="rd">${esc(res.reading)}</div>`:''}<div class="ko">${esc(res.reply_ko)}</div></div>`);
+  scrollLog();
+
+  setState('speaking');
+  await speak(res.reply, C.lang);
+  if(!C || C.ended) return;
+  setState('listening');
+  Mic.resume();
+}
+
+async function sendAudio(wavB64){
+  Mic.pause();
+  await aiTurn([{inline_data:{mime_type:'audio/wav', data: wavB64}}, {text:'(This audio is my turn in the call.)'}]);
+}
+function forceSend(){
+  if(!C) return;
+  if(C.state==='speaking'){ speechSynthesis.cancel(); return; }  // 친구 말 끊기
+  Mic.flush(true);
+}
+function sendTyped(){
+  const v = $('#typeIn').value.trim(); if(!v || !C || C.state==='thinking') return;
+  $('#typeIn').value = ''; speechSynthesis.cancel(); Mic.pause();
+  aiTurn([{text: v + '  (typed, treat as my spoken turn)'}]);
+}
+function toggleType(){ $('#typebar').classList.toggle('hidden'); if(!$('#typebar').classList.contains('hidden')) $('#typeIn').focus(); }
+$('#typeIn').addEventListener('keydown', e=>{ if(e.key==='Enter') sendTyped(); });
+function toggleMute(){ if(!C) return; C.muted = !C.muted; $('#muteBtn').classList.toggle('active', C.muted); if(C.state==='listening') setState('listening'); }
+function toggleKo(){ $('#log').classList.toggle('hide-ko'); $('#koBtn').classList.toggle('active', !$('#log').classList.contains('hide-ko')); }
+
+async function askHint(){
+  if(!C || C.state==='thinking') return;
+  const last = [...C.turns].reverse().find(t=>t.r==='ai')?.t || '';
+  try{
+    setStatus('힌트 찾는 중…');
+    const r = await gemini({
+      contents:[{role:'user', parts:[{text:`I'm practicing ${C.lang==='en'?'English':'Japanese'} (level: ${S.lv[C.lang]}) on a call. My friend just said: "${last}". Give me 2 short example answers I could say (natural, at my level) and a Korean meaning for each. JSON: {"options":[{"say":"","ko":""}]}`}]}],
+      generationConfig:{responseMimeType:'application/json'}
+    });
+    const html = (r.options||[]).map(o=>`<div>💬 <span class="${C.lang==='ja'?'ja':''}">${esc(o.say)}</span> <small style="color:var(--sub)">${esc(o.ko)}</small></div>`).join('');
+    $('#log').insertAdjacentHTML('beforeend', `<div class="hint">${html||'힌트를 못 찾았어요'}</div>`); scrollLog();
+  }catch(e){ toast('힌트를 가져오지 못했어요'); }
+  setState(C.state);
+}
+
+/* ---------------- MIC + 말 끝 감지(VAD) ---------------- */
+const Mic = (() => {
+  let ctx, stream, src, proc, rate = 48000;
+  let active = false, paused = true;
+  let noise = 0.01, calib = [], speechOn = false, buf = [], pre = [], silentMs = 0, speechMs = 0;
+  const bars = [];
+  const meter = $('#meter');
+  meter.innerHTML = Array.from({length:15},()=>'<span></span>').join('');
+  meter.querySelectorAll('span').forEach(s=>bars.push(s));
+
+  async function start(){
+    stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') await ctx.resume();
+    rate = ctx.sampleRate;
+    src = ctx.createMediaStreamSource(stream);
+    proc = ctx.createScriptProcessor(4096, 1, 1);
+    src.connect(proc); proc.connect(ctx.destination);
+    proc.onaudioprocess = onAudio;
+    active = true; paused = true; calib = [];
+  }
+  function onAudio(e){
+    const out = e.outputBuffer.getChannelData(0); out.fill(0);
+    if(!active) return;
+    const d = e.inputBuffer.getChannelData(0);
+    let sum = 0; for(let i=0;i<d.length;i++) sum += d[i]*d[i];
+    const rms = Math.sqrt(sum/d.length), ms = d.length/rate*1000;
+    drawMeter(paused || (C&&C.muted) ? 0 : rms);
+    if(paused || !C || C.muted || C.state!=='listening' && C.state!=='recording') return;
+
+    if(calib.length < 8){ calib.push(rms); noise = Math.max(0.006, calib.reduce((a,b)=>a+b,0)/calib.length); return; }
+    const thr = Math.max(0.018, noise*2.8);
+    const chunk = new Float32Array(d);
+
+    if(!speechOn){
+      pre.push(chunk); if(pre.length>4) pre.shift();
+      if(rms > thr){ speechOn = true; buf = [...pre]; pre = []; silentMs = 0; speechMs = 0; setState('recording'); }
+      else noise = noise*0.97 + rms*0.03;   // 주변 소음 천천히 따라가기
+    } else {
+      buf.push(chunk);
+      if(rms > thr*0.75){ silentMs = 0; speechMs += ms; } else silentMs += ms;
+      const total = buf.length*ms;
+      if(silentMs > 1400 || total > 30000) flush(false);
+    }
+  }
+  function drawMeter(rms){
+    const lvl = Math.min(1, rms*14);
+    bars.forEach((b,i)=>{ const k = 1 - Math.abs(i-7)/8; b.style.height = (6 + lvl*30*k*(0.6+Math.random()*0.4)) + 'px'; });
+  }
+  function flush(manual){
+    if(!speechOn || !buf.length){ if(manual) toast('아직 들린 말이 없어요'); return; }
+    const chunks = buf; const spoke = speechMs;
+    speechOn = false; buf = []; silentMs = 0; speechMs = 0;
+    if(spoke < 350 && !manual){ setState('listening'); return; }  // 잡음
+    const wav = encodeWav(chunks, rate);
+    sendAudio(wav);
+  }
+  function encodeWav(chunks, inRate){
+    let len = chunks.reduce((a,c)=>a+c.length,0);
+    const all = new Float32Array(len); let o=0; chunks.forEach(c=>{ all.set(c,o); o+=c.length; });
+    const outRate = 16000, ratio = inRate/outRate, n = Math.floor(all.length/ratio);
+    const pcm = new Int16Array(n);
+    for(let i=0;i<n;i++){
+      const s0 = Math.floor(i*ratio), s1 = Math.min(all.length, Math.floor((i+1)*ratio));
+      let acc=0; for(let j=s0;j<s1;j++) acc+=all[j]; const v = acc/Math.max(1,s1-s0);
+      pcm[i] = Math.max(-1, Math.min(1, v)) * 0x7fff;
+    }
+    const buffer = new ArrayBuffer(44 + pcm.length*2), dv = new DataView(buffer);
+    const ws = (p,s)=>{ for(let i=0;i<s.length;i++) dv.setUint8(p+i, s.charCodeAt(i)); };
+    ws(0,'RIFF'); dv.setUint32(4, 36+pcm.length*2, true); ws(8,'WAVE'); ws(12,'fmt ');
+    dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+    dv.setUint32(24,outRate,true); dv.setUint32(28,outRate*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true);
+    ws(36,'data'); dv.setUint32(40, pcm.length*2, true);
+    new Int16Array(buffer, 44).set(pcm);
+    const bytes = new Uint8Array(buffer); let bin=''; const step=0x8000;
+    for(let i=0;i<bytes.length;i+=step) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+step));
+    return btoa(bin);
+  }
+  return {
+    start,
+    pause(){ paused = true; speechOn = false; buf = []; pre = []; },
+    resume(){ if(ctx && ctx.state==='suspended') ctx.resume(); paused = false; },
+    flush,
+    stop(){ active=false; paused=true; try{proc&&proc.disconnect(); src&&src.disconnect();}catch(e){} try{stream&&stream.getTracks().forEach(t=>t.stop());}catch(e){} try{ctx&&ctx.close();}catch(e){} drawMeter(0); }
+  };
+})();
+
+/* ---------------- HANG UP + REPORT ---------------- */
+async function hangUp(){
+  if(!C) return;
+  C.ended = true; speechSynthesis.cancel(); Mic.stop(); clearInterval(C.timerH);
+  const call = { id:C.id, lang:C.lang, date:C.date, dur:Math.round((Date.now()-C.start)/1000), turns:C.turns, report:null };
+  const spoke = call.turns.filter(t=>t.r==='me').length;
+  C = null;
+  if(!spoke){ show('home'); toast('통화가 끝났어요'); return; }
+  H.push(call); if(H.length>200) H = H.slice(-200); save('mc_history', H);
+  show('report');
+  $('#repBody').innerHTML = '<div class="loading"><div class="spin"></div>오늘 통화를 정리하고 있어요…</div>';
+  try{
+    call.report = await makeReport(call);
+    save('mc_history', H);
+  }catch(e){ /* 리포트 실패해도 대화는 남김 */ }
+  renderReport(call);
+}
+
+async function makeReport(call){
+  const lang = call.lang==='en'?'English':'Japanese';
+  const transcript = call.turns.map(t=>(t.r==='me'?'ME: ':'FRIEND: ')+t.t).join('\n');
+  return await gemini({
+    contents:[{role:'user', parts:[{text:
+`You are a kind ${lang} conversation coach for a Korean learner (level: ${S.lv[call.lang]}). Here is a phone-call transcript (ME = learner):
+${transcript}
+
+Return JSON in this shape. Korean for *_ko fields. Base everything only on what ME actually said.
+{"summary_ko":"one line: what we talked about","score":1-5 (fluency & confidence),
+ "good_ko":"one or two sentences of specific praise",
+ "corrections":[{"said":"ME's original","better":"natural version","why_ko":"short reason"}] (max 5, only real issues),
+ "expressions":[{"text":"useful ${lang} expression for next time","reading":"${call.lang==='ja'?'hiragana reading':''}","ko":"meaning"}] (3-5),
+ "next_ko":"one short tip for the next call"}`}]}],
+    generationConfig:{responseMimeType:'application/json', temperature:.4}
+  });
+}
+
+function renderReport(call){
+  const r = call.report, L = call.lang, ja = L==='ja'?'ja':'';
+  const head = `<div class="card">
+    <span class="tag ${L}" style="font-size:12px;padding:3px 9px;border-radius:20px">${L==='en'?'영어':'일본어'} · ${S.fname[L]}</span>
+    <div class="rep-h">${esc(r?.summary_ko || '오늘의 통화')}</div>
+    <div class="rep-s">${call.date.replace(/-/g,'.')} · ${Math.floor(call.dur/60)}분 ${call.dur%60}초 · 내가 말한 횟수 ${call.turns.filter(t=>t.r==='me').length}번</div>
+    ${r?.score ? `<div class="stars">${'★'.repeat(Math.max(1,Math.min(5,r.score|0)))}${'☆'.repeat(5-Math.max(1,Math.min(5,r.score|0)))}</div>`:''}
+    ${r?.good_ko ? `<div style="margin-top:8px;font-size:14px;line-height:1.6">👏 ${esc(r.good_ko)}</div>`:''}
+  </div>`;
+  const corr = r?.corrections?.length ? `<div class="card"><div class="label">이렇게 말하면 더 자연스러워요</div>${r.corrections.map(c=>`
+    <div class="corr ${ja}"><div class="x">${esc(c.said)}</div><div class="o">→ ${esc(c.better)} <button class="say" onclick="speak(${esc(JSON.stringify(c.better))},'${L}')">🔊</button></div><small>${esc(c.why_ko)}</small></div>`).join('')}</div>` : '';
+  const ex = r?.expressions?.length ? `<div class="card"><div class="label">다음에 써 볼 표현</div>${r.expressions.map(x=>`
+    <div class="expr"><div><div class="e ${ja}">${esc(x.text)}</div>${x.reading?`<small class="ja">${esc(x.reading)}</small>`:''}<small>${esc(x.ko)}</small></div>
+    <button class="say" onclick="speak(${esc(JSON.stringify(x.text))},'${L}')">🔊</button></div>`).join('')}</div>` : '';
+  const next = r?.next_ko ? `<div class="card"><div class="label">다음 통화 팁</div><div style="font-size:14px;line-height:1.6">${esc(r.next_ko)}</div></div>` : '';
+  const fail = !r ? `<div class="card" style="font-size:14px;color:var(--sub)">리포트를 만들지 못했어요. 대화 내용은 아래에 남아 있어요.</div>` : '';
+  const script = `<div class="card"><div class="label">대화 전체</div>${call.turns.map(t=>`<div style="padding:6px 0;font-size:14px;line-height:1.5;border-top:1px dashed var(--line)" class="${ja}"><b style="font-weight:400;color:${t.r==='me'?'var(--sky-d)':'var(--pink-d)'}">${t.r==='me'?'나':esc(S.fname[L])}</b> ${esc(t.t)}</div>`).join('')}</div>`;
+  $('#repBody').innerHTML = head + fail + corr + ex + next + script +
+    `<button class="btn" onclick="show('home')">홈으로</button><button class="btn ghost" onclick="deleteCall('${call.id}')">이 기록 지우기</button><div style="height:20px"></div>`;
+}
+function openReport(id){ const c = H.find(x=>x.id===id); if(!c) return; show('report'); renderReport(c); }
+function deleteCall(id){ if(!confirm('이 통화 기록을 지울까요?')) return; H = H.filter(x=>x.id!==id); save('mc_history', H); show('home'); }
+
+/* ---------------- SETTINGS ---------------- */
+let tmpDays = [];
+function openSettings(){
+  $('#sKey').value = S.key; $('#sModel').value = S.model; $('#sName').value = S.name; $('#sTopics').value = S.topics;
+  $('#sLvEn').value = S.lv.en; $('#sLvJa').value = S.lv.ja; $('#sTime').value = S.time; $('#sLen').value = String(S.len);
+  $('#sRate').value = S.rate; $('#rateV').textContent = S.rate+'x';
+  $('#sFnEn').value = S.fname.en; $('#sFnJa').value = S.fname.ja;
+  tmpDays = [...S.days]; renderDays(); loadVoices();
+  show('settings');
+}
+function renderDays(){
+  $('#sDays').innerHTML = tmpDays.map((v,i)=>`<button class="${v}" onclick="cycleDay(${i})">${DAYS[i]}<br>${v==='en'?'🇺🇸':v==='ja'?'🇯🇵':'쉼'}</button>`).join('');
+}
+function cycleDay(i){ tmpDays[i] = {en:'ja', ja:'off', off:'en'}[tmpDays[i]]; renderDays(); }
+function readVoiceSelects(){ S.voice = {en:$('#sVoiceEn').value, ja:$('#sVoiceJa').value}; S.rate = parseFloat($('#sRate').value); }
+function saveSettings(silent){
+  S.key = $('#sKey').value.trim(); S.model = $('#sModel').value.trim() || 'gemini-flash-latest';
+  S.name = $('#sName').value.trim(); S.topics = $('#sTopics').value.trim();
+  S.lv = {en:$('#sLvEn').value, ja:$('#sLvJa').value};
+  const oldTime = S.time; S.time = $('#sTime').value || '21:00';
+  if(oldTime !== S.time) { delete RANG[ymd()]; save('mc_rang', RANG); }
+  S.len = parseInt($('#sLen').value); S.days = [...tmpDays];
+  S.fname = {en:$('#sFnEn').value.trim()||'Emma', ja:$('#sFnJa').value.trim()||'ユイ'};
+  readVoiceSelects();
+  save('mc_settings', S);
+  if(silent!==true){ toast('저장했어요'); show('home'); }
+}
+
+/* ---------------- INIT ---------------- */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderHome();
+if(!S.key) setTimeout(()=>toast('⚙️ 설정에서 Gemini API 키를 넣으면 시작할 수 있어요', 4000), 600);
+checkSchedule();
+</script>
+</body>
+</html>

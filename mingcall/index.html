@@ -117,6 +117,11 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
 .fix{align-self:flex-end;max-width:86%;background:var(--mint-l);border:1px dashed var(--mint);border-radius:14px;padding:8px 12px;font-size:14px;line-height:1.45}
 .fix b{font-weight:400;color:#2f9d76}
 .fix small{display:block;color:var(--sub);font-size:12px;margin-top:3px}
+.typing{display:flex;gap:5px;padding:14px 16px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--sky);animation:bl 1s infinite}
+.lang-ja .typing i{background:var(--pink)}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 .hint{align-self:center;max-width:92%;background:#fffaf0;border:1px dashed var(--butter);border-radius:14px;padding:8px 12px;font-size:14px}
 .sys{align-self:center;font-size:12px;color:var(--sub);background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:20px}
 
@@ -273,7 +278,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
     <div class="field">
       <label>모델</label>
       <input id="sModel" autocomplete="off">
-      <div class="help">기본값 gemini-2.5-flash (무료 사용 가능). 안 되면 앱이 다른 모델로 알아서 바꿔 봐요.</div>
+      <div class="help">기본값 gemini-2.5-flash (무료 사용 가능). 더 빠르게 하고 싶으면 gemini-2.5-flash-lite 로 바꿔 보세요 (교정은 조금 덜 꼼꼼해요).</div>
     </div>
     <button class="btn ghost" onclick="testConn()">🔌 연결 테스트</button>
     <div id="connRes" class="help" style="margin-top:8px;font-size:13px;line-height:1.5"></div>
@@ -506,12 +511,48 @@ function testVoice(){
 const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
 let lastErr = null;
 
-async function rawGemini(model, body){
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+function speedUp(model, body){
+  // 2.5 Flash 계열은 '생각 단계'를 끄면 훨씬 빨라져요 (회화에는 생각이 필요 없음)
+  if(/^gemini-2\.5-flash/.test(model)){
+    const b = structuredClone(body);
+    b.generationConfig = Object.assign({}, b.generationConfig, {thinkingConfig:{thinkingBudget:0}});
+    return b;
+  }
+  return body;
+}
+async function rawGemini(model, body, onPartial){
+  body = speedUp(model, body);
+  const stream = typeof onPartial === 'function';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:${stream ? 'streamGenerateContent?alt=sse' : 'generateContent'}`;
   let r;
   try{
     r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':S.key.trim()}, body:JSON.stringify(body)});
   }catch(e){ const er = new Error('NETWORK: '+e.message); er.kind='network'; throw er; }
+  if(stream && r.ok && r.body && r.body.getReader){
+    // 조각조각 받으면서 대답 문장이 완성되는 순간 바로 말하기 시작
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let pending = '', acc = '', finish = '';
+    while(true){
+      const {value, done} = await reader.read();
+      if(done) break;
+      pending += dec.decode(value, {stream:true});
+      let i;
+      while((i = pending.indexOf('\n')) >= 0){
+        const line = pending.slice(0, i).trim(); pending = pending.slice(i+1);
+        if(!line.startsWith('data:')) continue;
+        try{
+          const j = JSON.parse(line.slice(5));
+          const c = j?.candidates?.[0];
+          acc += c?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join('') || '';
+          if(c?.finishReason) finish = c.finishReason;
+          onPartial(acc);
+        }catch(e){}
+      }
+    }
+    if(!acc){ const er = new Error('빈 응답 ('+(finish||'이유 모름')+')'); er.kind='empty'; throw er; }
+    try{ return JSON.parse(acc); }
+    catch(e){ const m = acc.match(/\{[\s\S]*\}/); if(m){ try{ return JSON.parse(m[0]); }catch(_){} } const er = new Error('응답을 JSON으로 읽지 못했어요'); er.kind='parse'; throw er; }
+  }
   const j = await r.json().catch(()=>({}));
   if(!r.ok){
     const msg = j?.error?.message || ('HTTP '+r.status);
@@ -532,7 +573,7 @@ async function rawGemini(model, body){
   catch(e){ const m = txt.match(/\{[\s\S]*\}/); if(m){ try{ return JSON.parse(m[0]); }catch(_){} } const er = new Error('응답을 JSON으로 읽지 못했어요'); er.kind='parse'; throw er; }
 }
 
-async function gemini(body){
+async function gemini(body, onPartial){
   if(!S.key) throw Object.assign(new Error('API 키가 없어요'), {kind:'key'});
   const models = [S.model || 'gemini-2.5-flash', ...FALLBACK_MODELS.filter(m=>m!==S.model)];
   let err;
@@ -540,7 +581,7 @@ async function gemini(body){
     for(let attempt=0; attempt<2; attempt++){
       try{
         const b = attempt===1 && err?.kind==='schema' ? stripSchema(body) : body;
-        const out = await rawGemini(model, b);
+        const out = await rawGemini(model, b, onPartial);
         if(model !== S.model){ S.model = model; save('mc_settings', S); toast(`모델을 ${model}(으)로 바꿨어요`); }
         lastErr = null;
         return out;
@@ -647,25 +688,43 @@ function setState(st){
   setStatus(map[st] || '');
 }
 function scrollLog(){ const l = $('#log'); requestAnimationFrame(()=> l.scrollTop = l.scrollHeight); }
+function showTyping(on){
+  $('#typing')?.remove();
+  if(on){ $('#log').insertAdjacentHTML('beforeend', '<div class="b ai typing" id="typing"><i></i><i></i><i></i></div>'); scrollLog(); }
+}
 function addSys(t){ $('#log').insertAdjacentHTML('beforeend', `<div class="sys">${esc(t)}</div>`); scrollLog(); }
 
 async function aiTurn(parts, isOpener=false){
   if(!C || C.ended) return;
   setState('thinking');
   const contents = [...C.hist, {role:'user', parts}];
-  let res;
+  let res, speakP = null;
+  const myCall = C, lang = C.lang;
+  // 대답 문장("reply")이 다 도착하면 나머지(읽기·번역)를 기다리지 않고 바로 말하기
+  const onPartial = acc => {
+    if(speakP || myCall.ended) return;
+    const m = acc.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    if(!m) return;
+    let reply; try{ reply = JSON.parse('"'+m[1]+'"'); }catch(e){ return; }
+    if(!reply.trim()) return;
+    setState('speaking');
+    speakP = speak(reply, lang);
+  };
+  showTyping(true);
   try{
     res = await gemini({
       systemInstruction:{parts:[{text: persona(C.lang)}]},
       contents,
       generationConfig:{ responseMimeType:'application/json', responseSchema: TURN_SCHEMA, temperature: .9 }
-    });
+    }, onPartial);
   }catch(e){
+    showTyping(false);
     if(!C || C.ended) return;
     $('#log').insertAdjacentHTML('beforeend', `<div class="hint" style="font-size:13px;line-height:1.5">⚠️ <b style="font-weight:400">${esc(explainErr(e))}</b><br><small style="color:var(--sub);word-break:break-all">원래 메시지: ${esc(e.message)}</small></div>`);
     scrollLog();
     setState('listening'); Mic.resume(); return;
   }
+  showTyping(false);
   if(!C || C.ended) return;
 
   const heard = (res.heard||'').trim();
@@ -686,8 +745,8 @@ async function aiTurn(parts, isOpener=false){
   $('#log').insertAdjacentHTML('beforeend', `<div class="b ai ${C.lang==='ja'?'ja':''}">${esc(res.reply)}${res.reading && C.lang==='ja' && S.lv.ja==='beginner' ? `<div class="rd">${esc(res.reading)}</div>`:''}<div class="ko">${esc(res.reply_ko)}</div></div>`);
   scrollLog();
 
-  setState('speaking');
-  await speak(res.reply, C.lang);
+  if(!speakP){ setState('speaking'); speakP = speak(res.reply, C.lang); }
+  await speakP;
   if(!C || C.ended) return;
   setState('listening');
   Mic.resume();
@@ -769,7 +828,7 @@ const Mic = (() => {
       buf.push(chunk);
       if(rms > thr*0.75){ silentMs = 0; speechMs += ms; } else silentMs += ms;
       const total = buf.length*ms;
-      if(silentMs > 1400 || total > 30000) flush(false);
+      if(silentMs > 900 || total > 30000) flush(false);
     }
   }
   function drawMeter(rms){

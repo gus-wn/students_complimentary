@@ -19,7 +19,7 @@
 | `goals/` | 기말고사 목표 트리 (앱으로 설치 가능: `manifest.webmanifest`, `sw.js`, `icons/`) |
 | `praise/index.html` | 칭찬 기록부 |
 | `magazine/index.html` | ZEP 매거진 (글·사진은 선생님 구글 드라이브에 조별로 저장) |
-| `fonts/` | 꾸불림체(제목용 글자만), 조선일보명조 |
+| `fonts/` | 꾸불림체(제목용 글자만 / 매거진용 전체 `BMkkubulim.woff2`), 조선일보명조 |
 | `apps-script/Code.gs` | 구글 시트에 붙여 넣는 연결 코드 (두 페이지 공용) |
 | `claude-artifact.html` | 예전 claude.ai 아티팩트 버전 (참고용) |
 

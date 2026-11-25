@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Gaegu:wght@400;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:"BM Kkubulim Full";src:url("../fonts/BMkkubulim.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"Chosun Ilbo Myungjo";src:url("../fonts/ChosunIlboMyungjo.woff") format("woff");font-display:swap}
 
 :root{
@@ -25,7 +26,7 @@
   --display:"Playfair Display","Nanum Myeongjo",serif;
   --head:"Chosun Ilbo Myungjo","Nanum Myeongjo",serif;
   --body:"Chosun Ilbo Myungjo","Gowun Batang","Nanum Myeongjo",serif;
-  --hand:"Kkubulim","꾸불림체","Gaegu",cursive;
+  --hand:"BM Kkubulim Full","Gaegu",cursive;
   /* 레이아웃: A4 세로(210×297mm) 페이지를 쌓고, 페이지마다 모눈 배경 + 얇은 선 + 파스텔 포인트 */
 }
 *{box-sizing:border-box}
@@ -271,6 +272,27 @@ figure{margin:0}
 .tt td{font-variant-numeric:tabular-nums}
 .acts{display:flex;flex-wrap:wrap;gap:4px}
 .row-end{display:flex;gap:6px;justify-content:flex-end;margin:0}
+
+/* 초기 화면: 모두 꾸불림체 */
+.landing,.landing h1,.landing .kicker,.gcard,.gcard *{font-family:"BM Kkubulim Full","Gaegu",cursive;font-style:normal;font-weight:400}
+.landing .kicker{font-size:16px}
+.landing h1{font-size:36px}
+.landing-sub{font-size:17px}
+.gnum{font-size:44px}
+.glabel{font-size:20px}
+.ggo{font-size:14px}
+
+/* 조별 색: 포인트색 + 종이 배경 */
+[data-g="1"]{--sky:#cfe5f4;--sky-ink:#3d7fae;--paper:#fbfdff;--grid:#e6eef6}
+[data-g="2"]{--sky:#f7d6df;--sky-ink:#c0587a;--paper:#fffafb;--grid:#f6e6eb;--blossom:#d6e6f4}
+[data-g="3"]{--sky:#cdeedd;--sky-ink:#3c8a65;--paper:#fafefb;--grid:#e3f1e9}
+[data-g="4"]{--sky:#f6e6b4;--sky-ink:#a3771a;--paper:#fffdf5;--grid:#f3ecd5}
+[data-g="5"]{--sky:#e1d9f5;--sky-ink:#6d5aa9;--paper:#fdfbff;--grid:#ece8f6}
+.groups a::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px;background:var(--dot)}
+.groups a:nth-child(1){--dot:#3d7fae}.groups a:nth-child(2){--dot:#c0587a}.groups a:nth-child(3){--dot:#3c8a65}.groups a:nth-child(4){--dot:#a3771a}.groups a:nth-child(5){--dot:#6d5aa9}
+.groups a.on{background:var(--dot);border-color:var(--dot)}
+.gcard:nth-child(1){border-top-color:#9ec7e6}.gcard:nth-child(2){border-top-color:#eeaabd}.gcard:nth-child(3){border-top-color:#9fd8bb}.gcard:nth-child(4){border-top-color:#ecd07e}.gcard:nth-child(5){border-top-color:#c3b5ea}
+.gcard:nth-child(1) .gnum{color:#3d7fae}.gcard:nth-child(2) .gnum{color:#c0587a}.gcard:nth-child(3) .gnum{color:#3c8a65}.gcard:nth-child(4) .gnum{color:#a3771a}.gcard:nth-child(5) .gnum{color:#6d5aa9}
 
 /* PDF용 숨은 작업대 */
 #pdfStage{position:absolute;left:-12000px;top:0;width:210mm;counter-reset:pg}
@@ -707,6 +729,7 @@ function clean(html){
 /* ---------- 매거진 만들기 ---------- */
 function build(box, g){
   box.innerHTML = TPL.split("{{G}}").join(String(g));
+  box.setAttribute("data-g", String(g));
   box.querySelectorAll(".ed").forEach(function(el, i){ el.dataset.k = "e" + i; });
   box.querySelectorAll(".ph").forEach(function(ph){
     ph.insertAdjacentHTML("beforeend",

@@ -40,16 +40,19 @@ body{background:#e9ebee;color:var(--ink);font-family:var(--body);font-size:10.5p
 .toolbar button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--ink)}
 .toolbar button:hover{background:var(--sky)}
 .toolbar button:focus-visible,[contenteditable]:focus-visible,.ph:focus-visible{outline:2px solid var(--sky-ink);outline-offset:2px}
+.toolbar .status{color:var(--sky-ink);font-size:12px}
 .toolbar .tip{color:var(--soft);margin-left:auto}
 .notice{display:none;max-width:210mm;margin:12px auto 0;padding:10px 14px;background:var(--butter);border:1px solid #e6d79c;border-radius:8px;font-size:13px}
 .notice.show{display:block}
 
 /* ---------- 페이지 ---------- */
-.pages{display:flex;flex-direction:column;align-items:center;gap:14mm;padding:12mm 16px 24mm}
-.page{position:relative;width:210mm;height:297mm;overflow:hidden;background-color:var(--paper);
+.pages{counter-reset:pg;display:flex;flex-direction:column;align-items:center;gap:14mm;padding:12mm 16px 24mm}
+.page{counter-increment:pg;position:relative;width:210mm;height:297mm;overflow:hidden;background-color:var(--paper);
   background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
   background-size:5mm 5mm;box-shadow:0 2px 14px rgba(30,40,60,.12);padding:16mm 16mm 18mm;display:flex;flex-direction:column;gap:6mm}
 .run{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);border-bottom:.3mm solid var(--ink);padding-bottom:2mm}
+.folio .pn::before{content:counter(pg,decimal-leading-zero)}
+.lang{font-family:var(--display);font-size:7.5pt;font-weight:700;letter-spacing:.12em;border:.3mm solid currentColor;border-radius:99px;padding:.3mm 2.5mm;margin-left:2mm}
 .folio{position:absolute;bottom:9mm;left:16mm;right:16mm;display:flex;justify-content:space-between;font-family:var(--display);font-size:8pt;color:var(--soft);border-top:.2mm solid var(--line);padding-top:2mm}
 
 h1,h2,h3{font-family:var(--head);margin:0;text-wrap:balance;line-height:1.25}
@@ -168,8 +171,8 @@ figure{margin:0}
 .paper .hand p{margin:0}
 .side{display:flex;flex-direction:column;gap:5mm}
 .qr{background:#fff;border:.3mm solid var(--ink);border-radius:2mm;padding:4mm;display:flex;flex-direction:column;align-items:center;gap:2mm;text-align:center}
-#qrbox{width:40mm;height:40mm;display:flex;align-items:center;justify-content:center;color:var(--soft);font-size:8pt;border:.2mm dashed var(--line)}
-#qrbox img,#qrbox canvas{width:40mm!important;height:40mm!important}
+.qrbox{width:40mm;height:40mm;display:flex;align-items:center;justify-content:center;color:var(--soft);font-size:8pt;border:.2mm dashed var(--line)}
+.qrbox img,.qrbox canvas{width:40mm!important;height:40mm!important}
 .url{font-family:var(--display);font-size:7.5pt;word-break:break-all;color:var(--sky-ink)}
 .howto{counter-reset:h;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:2mm;font-size:9pt}
 .howto li{counter-increment:h;display:grid;grid-template-columns:6mm 1fr;gap:2mm}
@@ -210,11 +213,15 @@ figure{margin:0}
   <b>ZEP Magazine</b>
   <button type="button" id="btnPrint">인쇄 / PDF 저장</button>
   <button type="button" id="btnUrl">ZEP 링크 입력 → QR 만들기</button>
+  <button type="button" id="btnSave">파일로 백업</button>
+  <button type="button" id="btnLoad">백업 불러오기</button>
   <button type="button" id="btnReset">처음 상태로</button>
-  <span class="tip">글자는 눌러서 바로 고치고, 점선 칸을 누르면 사진이 들어가요. 고친 내용은 이 브라우저에 자동 저장됩니다.</span>
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="tip">글자를 눌러 고치고, 점선 칸을 누르면 사진이 들어가요. 이 기기·브라우저에 자동 저장되니, 다른 컴퓨터로 옮기려면 파일로 백업하세요.</span>
 </div>
 <div class="notice" id="notice"></div>
 <input type="file" id="fileIn" accept="image/*" hidden>
+<input type="file" id="backupIn" accept=".json,application/json" hidden>
 
 <main class="pages" id="pages">
 
@@ -224,7 +231,7 @@ figure{margin:0}
     <div class="title">ZEP<br><i>Magazine</i></div>
     <div class="issue"><span class="ed">2026 · Vol. 01</span><br><span class="ed">신원고 2학년 8반</span><br><span class="ed">진로 × 에듀테크 프로젝트</span></div>
   </div>
-  <div class="cover-sub"><span class="ed">메타버스로 만나는 우리 학교, 우리 동네</span><span class="ed">1학기 ~ 2학기 프로젝트 결과 보고</span></div>
+  <div class="cover-sub"><span class="ed">메타버스로 만나는 우리 학교, 우리 동네</span><span class="ed">1학기 ~ 2학기 프로젝트 결과 보고 · 한국어 / English</span></div>
   <h1 class="cover-head ed">교실 밖으로 걸어 나간<br><em>우리 동네 메타버스</em></h1>
   <div class="cover-body">
     <div class="ph" data-ph="cover"><span>표지 사진<br>(ZEP 로비 맵 전체 화면 추천)</span></div>
@@ -252,9 +259,11 @@ figure{margin:0}
         <li><span class="n">02</span><span class="ed">PART 1. 우리 학교 가상 캠퍼스</span><span class="p">03</span></li>
         <li><span class="n">03</span><span class="ed">스페이스 세부 구현 내역</span><span class="p">04</span></li>
         <li><span class="n">04</span><span class="ed">PART 2. 지역 명소 특집</span><span class="p">05</span></li>
-        <li><span class="n">05</span><span class="ed">ZEP 공간으로 옮기기</span><span class="p">06</span></li>
-        <li><span class="n">06</span><span class="ed">친구에게 보내는 초대장</span><span class="p">07</span></li>
-        <li><span class="n">07</span><span class="ed">돌아보며 · 만든 사람들</span><span class="p">08</span></li>
+        <li><span class="n">05</span><span class="ed">Local Spot Special (English)</span><span class="p">06</span></li>
+        <li><span class="n">06</span><span class="ed">ZEP 공간으로 옮기기</span><span class="p">07</span></li>
+        <li><span class="n">07</span><span class="ed">친구에게 보내는 초대장</span><span class="p">08</span></li>
+        <li><span class="n">08</span><span class="ed">Invitation Letter (English)</span><span class="p">09</span></li>
+        <li><span class="n">09</span><span class="ed">돌아보며 · 만든 사람들</span><span class="p">10</span></li>
       </ol>
     </div>
     <div class="letter">
@@ -273,7 +282,7 @@ figure{margin:0}
       <div class="step"><span class="when ed">2학기 · 3단계</span><h3 class="ed">링크 공유 · 초대의 글</h3><p class="ed">완성된 공간의 URL을 확보하고 초대 이유와 활용 방법을 담은 글 작성</p></div>
     </div>
   </div>
-  <div class="folio"><span>02</span><span class="ed">신원고 2학년 8반</span></div>
+  <div class="folio"><span class="pn"></span><span class="ed">신원고 2학년 8반</span></div>
 </section>
 
 <!-- ===================== P3 PART 1 개요 ===================== -->
@@ -307,7 +316,7 @@ figure{margin:0}
     </ul>
   </div>
   <div class="ph" data-ph="p3" style="flex:1"><span>스페이스 대표 화면 (전체 맵 스크린샷)</span></div>
-  <div class="folio"><span>03</span><span>Part 1 · 우리 학교 가상 캠퍼스</span></div>
+  <div class="folio"><span class="pn"></span><span>Part 1 · 우리 학교 가상 캠퍼스</span></div>
 </section>
 
 <!-- ===================== P4 세부 구현 내역 ===================== -->
@@ -327,12 +336,12 @@ figure{margin:0}
       <tr><td>4</td><td><div class="ph" data-ph="b4"><span>스크린샷</span></div></td><td><h3 class="ed">구현한 공간 이름</h3><p class="ed"><span class="key">F</span>사용한 오브젝트와 연결한 자료(사진, 영상, 웹 링크)를 적어 주세요.</p></td></tr>
     </tbody>
   </table>
-  <div class="folio"><span>04</span><span>Part 1 · 세부 구현 내역</span></div>
+  <div class="folio"><span class="pn"></span><span>Part 1 · 세부 구현 내역</span></div>
 </section>
 
 <!-- ===================== P5 PART 2 지역 명소 특집 ===================== -->
 <section class="page">
-  <div class="run"><span>Part 2 · 2학기</span><span>Local Feature</span></div>
+  <div class="run"><span>Part 2 · 2학기<span class="lang">한국어</span></span><span>Local Feature</span></div>
   <div class="opener">
     <div><div class="part pink">02</div><p class="kicker">Local Spot Special</p><h2 class="ed">우리 동네 명소, ○○○</h2></div>
     <p class="lede ed">학교를 넘어 동네로. 우리 모둠이 고른 명소의 매력을 조사해 소개합니다. 왜 이곳을 골랐는지 한두 문장으로 적어 주세요.</p>
@@ -356,7 +365,36 @@ figure{margin:0}
     <div class="card"><span class="tag butter">맛집</span><h3 class="ed">근처에서 먹을 곳</h3><p class="ed">함께 들르기 좋은 맛집과 추천 메뉴를 적어 주세요.</p></div>
     <div class="card"><span class="tag pink">팁</span><h3 class="ed">방문 꿀팁</h3><p class="ed">사진 찍기 좋은 곳, 주의할 점 등을 적어 주세요.</p></div>
   </div>
-  <div class="folio"><span>05</span><span>Part 2 · 지역 명소 특집</span></div>
+  <div class="folio"><span class="pn"></span><span>Part 2 · 지역 명소 특집</span></div>
+</section>
+
+<!-- ===================== 명소 특집 (English) ===================== -->
+<section class="page" lang="en">
+  <div class="run"><span>Part 2 · Fall Semester<span class="lang">English</span></span><span>Local Feature</span></div>
+  <div class="opener">
+    <div><div class="part pink">02</div><p class="kicker">Local Spot Special</p><h2 class="ed">Our Neighborhood Gem: ○○○</h2></div>
+    <p class="lede ed">From our school to our neighborhood. Write one or two sentences about why your group chose this place.</p>
+  </div>
+  <div class="feature">
+    <div class="ph big" data-ph="spot-main-en"><span>Main photo of the spot</span></div>
+    <div class="spot-side">
+      <dl class="facts">
+        <dt>Name</dt><dd class="ed">○○○</dd>
+        <dt>Location</dt><dd class="ed">○○-ro, ○○-gu, Goyang-si, Gyeonggi-do</dd>
+        <dt>Getting there</dt><dd class="ed">○○ minutes by bus from school</dd>
+        <dt>Best time</dt><dd class="ed">Spring and autumn evenings</dd>
+        <dt>Team</dt><dd class="ed">Group ○ (Student ID / Name)</dd>
+      </dl>
+      <p class="pull ed">“Write a catchy one-line introduction to the spot.”</p>
+      <div class="ph" data-ph="spot-sub-en"><span>Extra photo</span></div>
+    </div>
+  </div>
+  <div class="cards3">
+    <div class="card"><span class="tag mint">Highlights</span><h3 class="ed">What makes it special</h3><p class="ed">Describe its history, nature or things to see.</p></div>
+    <div class="card"><span class="tag butter">Food</span><h3 class="ed">Where to eat nearby</h3><p class="ed">Recommend a restaurant and a menu item to try.</p></div>
+    <div class="card"><span class="tag pink">Tips</span><h3 class="ed">Visitor tips</h3><p class="ed">Best photo spots, things to watch out for, and more.</p></div>
+  </div>
+  <div class="folio"><span class="pn"></span><span>Part 2 · Local Spot Special</span></div>
 </section>
 
 <!-- ===================== P6 ZEP 구현 ===================== -->
@@ -387,12 +425,12 @@ figure{margin:0}
     <h3><span class="tag">구현하며 고민한 점</span></h3>
     <p class="ed">현실의 명소를 어떻게 공간으로 표현했는지, 어려웠던 점과 해결한 방법을 적어 주세요.</p>
   </div>
-  <div class="folio"><span>06</span><span>Part 2 · ZEP 구현</span></div>
+  <div class="folio"><span class="pn"></span><span>Part 2 · ZEP 구현</span></div>
 </section>
 
 <!-- ===================== P7 초대장 ===================== -->
 <section class="page">
-  <div class="run"><span>Part 3 · Invitation</span><span>You’re Invited</span></div>
+  <div class="run"><span>Part 3 · 초대의 글<span class="lang">한국어</span></span><span>You’re Invited</span></div>
   <div>
     <p class="kicker">You’re Invited</p>
     <h2 class="ed" style="font-size:22pt">우리 동네로 놀러 와!</h2>
@@ -415,8 +453,8 @@ figure{margin:0}
     <div class="side">
       <div class="qr">
         <span class="tag">ZEP 바로가기</span>
-        <div id="qrbox">ZEP 링크를 입력하면<br>QR코드가 생겨요</div>
-        <span class="url" id="urlText">zep.us/play/…</span>
+        <div class="qrbox">ZEP 링크를 입력하면<br>QR코드가 생겨요</div>
+        <span class="url urlText">zep.us/play/…</span>
       </div>
       <div class="box">
         <h3><span class="tag mint">이렇게 즐겨요</span></h3>
@@ -429,7 +467,49 @@ figure{margin:0}
       </div>
     </div>
   </div>
-  <div class="folio"><span>07</span><span>Part 3 · 초대의 글</span></div>
+  <div class="folio"><span class="pn"></span><span>Part 3 · 초대의 글</span></div>
+</section>
+
+<!-- ===================== 초대장 (English) ===================== -->
+<section class="page" lang="en">
+  <div class="run"><span>Part 3 · Invitation<span class="lang">English</span></span><span>You’re Invited</span></div>
+  <div>
+    <p class="kicker">You’re Invited</p>
+    <h2 class="ed" style="font-size:22pt">Come Visit Our Town!</h2>
+  </div>
+  <div class="invite">
+    <div class="paper">
+      <div class="hand ed">
+        <p>Dear friend,</p>
+        <p>Hi! I’d love to invite you to the ZEP space our group made.</p>
+        <p>We chose this place because …</p>
+        <p>(Write why you are inviting your friend.)</p>
+        <p>&nbsp;</p>
+        <p>When you come in, first …</p>
+        <p>(Explain how to look around the space.)</p>
+        <p>&nbsp;</p>
+        <p>Hope to see you there!</p>
+        <p style="text-align:right">From ○○○, ○○/○○/2026</p>
+      </div>
+    </div>
+    <div class="side">
+      <div class="qr">
+        <span class="tag">Visit our ZEP</span>
+        <div class="qrbox">Enter the ZEP link<br>to make a QR code</div>
+        <span class="url urlText">zep.us/play/…</span>
+      </div>
+      <div class="box">
+        <h3><span class="tag mint">How to enjoy</span></h3>
+        <ol class="howto">
+          <li class="ed">Scan the QR code or open the link</li>
+          <li class="ed">Move your avatar with the arrow keys</li>
+          <li class="ed">Press F next to glowing objects</li>
+          <li class="ed">Try the final quiz!</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="folio"><span class="pn"></span><span>Part 3 · Invitation Letter</span></div>
 </section>
 
 <!-- ===================== P8 뒷표지 ===================== -->
@@ -465,7 +545,8 @@ figure{margin:0}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
-  var KEY = "zep-magazine-v1";
+  var KEY = "zep-magazine-v2";
+  var statusEl = document.getElementById("status");
   var pages = document.getElementById("pages");
   var notice = document.getElementById("notice");
   var fileIn = document.getElementById("fileIn");
@@ -494,7 +575,13 @@ figure{margin:0}
   function save(){
     clearTimeout(timer);
     timer = setTimeout(function(){
-      if(!store(KEY, pages.innerHTML)) say("사진 용량이 커서 자동 저장을 하지 못했어요. 인쇄는 그대로 할 수 있습니다.");
+      if(store(KEY, pages.innerHTML)){
+        var d = new Date();
+        statusEl.textContent = "자동 저장됨 " + String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+      } else {
+        statusEl.textContent = "자동 저장 안 됨";
+        say("사진이 많아 브라우저 저장 공간이 꽉 찼어요. ‘파일로 백업’을 눌러 내 파일로 저장해 두세요. 인쇄는 그대로 할 수 있어요.");
+      }
     }, 400);
   }
 
@@ -529,11 +616,11 @@ figure{margin:0}
     r.onload = function(){
       var img = new Image();
       img.onload = function(){
-        var max = 1600, w = img.width, h = img.height, s = Math.min(1, max/Math.max(w,h));
+        var max = 1200, w = img.width, h = img.height, s = Math.min(1, max/Math.max(w,h));
         var c = document.createElement("canvas");
         c.width = Math.round(w*s); c.height = Math.round(h*s);
         c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-        ph.style.backgroundImage = "url(" + c.toDataURL("image/jpeg",0.85) + ")";
+        ph.style.backgroundImage = "url(" + c.toDataURL("image/jpeg",0.8) + ")";
         ph.classList.add("filled");
         save();
       };
@@ -543,17 +630,44 @@ figure{margin:0}
   });
 
   function makeQR(url){
-    var box = document.getElementById("qrbox");
-    var txt = document.getElementById("urlText");
-    if(!box) return;
-    box.innerHTML = "";
-    txt.textContent = url;
-    if(window.QRCode){
-      new QRCode(box,{text:url,width:300,height:300,colorDark:"#2a2d33",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
-    } else {
-      box.textContent = "QR 도구를 불러오지 못했어요";
-    }
+    document.querySelectorAll(".urlText").forEach(function(t){ t.textContent = url; });
+    document.querySelectorAll(".qrbox").forEach(function(box){
+      box.innerHTML = "";
+      if(window.QRCode){
+        new QRCode(box,{text:url,width:300,height:300,colorDark:"#2a2d33",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+      } else {
+        box.textContent = "QR 도구를 불러오지 못했어요";
+      }
+    });
   }
+
+  // 파일로 백업 / 불러오기
+  document.getElementById("btnSave").addEventListener("click", function(){
+    var data = JSON.stringify({app:"zep-magazine", v:2, html:pages.innerHTML, url:load(KEY+"-url")||""});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data],{type:"application/json"}));
+    var d = new Date();
+    a.download = "ZEP매거진_백업_" + (d.getMonth()+1) + "월" + d.getDate() + "일.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    say("백업 파일을 내려받았어요. 다른 컴퓨터에서는 ‘백업 불러오기’로 이어서 작업할 수 있어요.");
+  });
+  var backupIn = document.getElementById("backupIn");
+  document.getElementById("btnLoad").addEventListener("click", function(){ backupIn.value=""; backupIn.click(); });
+  backupIn.addEventListener("change", function(){
+    var f = backupIn.files && backupIn.files[0]; if(!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      try{
+        var d = JSON.parse(r.result);
+        if(d.app!=="zep-magazine" || !d.html) throw 0;
+        pages.innerHTML = d.html;
+        if(d.url) store(KEY+"-url", d.url);
+        wire(); save();
+        say("백업을 불러왔어요.");
+      }catch(e){ say("ZEP 매거진 백업 파일이 아니에요. ‘파일로 백업’으로 받은 .json 파일을 골라 주세요."); }
+    };
+    r.readAsText(f);
+  });
 
   // 링크 입력: 페이지 안에서 처리 (prompt 창 대신)
   document.getElementById("btnUrl").addEventListener("click", function(){
@@ -568,7 +682,7 @@ figure{margin:0}
       var v = inp.value.trim(); if(!v) return;
       makeQR(v); store(KEY+"-url", v);
       notice.classList.remove("show");
-      document.getElementById("qrbox").scrollIntoView({behavior:"smooth",block:"center"});
+      document.querySelector(".qrbox").scrollIntoView({behavior:"smooth",block:"center"});
       save();
     }
     document.getElementById("zepOk").addEventListener("click", ok);

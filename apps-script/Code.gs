@@ -1,6 +1,6 @@
 /**
  * 2학년 8반 사이트 — 구글 시트 연결 코드
- * (칭찬 기록부 + 기말고사 목표 트리)
+ * (칭찬 기록부 + 기말고사 목표 트리 + ZEP 매거진)
  *
  * 처음 설치
  * 1. 구글 시트에서 [확장 프로그램] → [Apps Script]를 엽니다.
@@ -22,6 +22,10 @@
  *
  * 알림(매일 아침 목표 알림, 한 번에 보내기)은 목표 트리의 '선생님 모드' 화면에서
  * Firebase 연결과 시각·기간·문구를 정합니다. 설정은 이 스크립트의 속성에 저장됩니다.
+ *
+ * ZEP 매거진: 조별(1~5조) 글과 사진은 내 구글 드라이브의
+ * '2학년 8반 ZEP 매거진 저장소 (지우지 마세요)' 폴더에 저장됩니다. (setup 실행 시 폴더 생성)
+ * 사진은 공유되지 않은 개인 파일로 저장되고, 이 스크립트를 통해서만 사이트에 보입니다.
  */
 
 const RECORD_SHEET = '칭찬기록';
@@ -80,6 +84,7 @@ function setup() {
   goal.hideColumns(G.id, 3);
 
   installDailyTrigger(); // 알림 설정이 있으면 매일 알림 예약을 다시 맞춥니다
+  magFolder();           // ZEP 매거진 저장 폴더 (드라이브 권한을 이때 묻습니다)
 
   const bad = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
   if (bad && bad.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(bad);
@@ -90,6 +95,10 @@ function setup() {
 function doGet(e) {
   const type = e && e.parameter ? e.parameter.type : '';
   if (type === 'goals') return json(publicGoals());
+  if (type === 'mag' || type === 'magPhoto') {
+    try { return json(type === 'mag' ? magGet(e) : magPhotoGet(e)); }
+    catch (err) { return json({ ok: false, error: '불러오지 못했습니다.' }); }
+  }
   return json(praiseData());
 }
 
@@ -138,6 +147,11 @@ function doPost(e) {
       case 'savePushSettings': return json(savePushSettings(d));
       case 'saveFirebase': return json(saveFirebase(d));
       case 'sendNow': return json(sendNow(d));
+      case 'magSave': return json(magSave(d));
+      case 'magPhoto': return json(magPhotoSave(d));
+      case 'magPhotoDel': return json(magPhotoDel(d));
+      case 'magTeacher': return json(magTeacher(d));
+      case 'magLock': return json(magLock(d));
       default: return json(savePraise(d)); // 칭찬 기록부 (action 없음)
     }
   } catch (err) {
@@ -456,6 +470,135 @@ function findRow(sh, id) {
   const ids = sh.getRange(2, G.id, sh.getLastRow() - 1, 1).getValues();
   for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return i + 2;
   return 0;
+}
+
+/* ───────────── ZEP 매거진 (조별 공동 편집) ───────────── */
+
+const MAG_GROUPS = 5;
+const MAG_FIELD_MAX = 20000;   // 글 칸 하나의 최대 길이
+const MAG_PHOTO_MAX = 3000000; // 사진 한 장(dataURL)의 최대 길이 (약 2MB)
+const MAG_LOCKED_MSG = '선생님이 잠근 매거진이라 고칠 수 없어요.';
+
+function magFolder() {
+  const p = props();
+  const id = p.getProperty('MAG_FOLDER');
+  if (id) {
+    try { const f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (e) {}
+  }
+  const f = DriveApp.createFolder('2학년 8반 ZEP 매거진 저장소 (지우지 마세요)');
+  p.setProperty('MAG_FOLDER', f.getId());
+  return f;
+}
+function magGroup(g) {
+  g = Number(g);
+  if (!(g >= 1 && g <= MAG_GROUPS && Math.floor(g) === g)) throw new Error('bad group');
+  return g;
+}
+function magFile(g) {
+  const it = magFolder().getFilesByName('group-' + g + '.json');
+  return it.hasNext() ? it.next() : null;
+}
+function magRead(g) {
+  const empty = { fields: {}, photos: {}, updated: 0, locked: false };
+  const f = magFile(g);
+  if (!f) return empty;
+  try { return Object.assign(empty, JSON.parse(f.getBlob().getDataAsString('UTF-8'))); } catch (e) { return empty; }
+}
+function magWrite(g, data, touch) {
+  if (touch !== false) data.updated = Date.now();
+  const s = JSON.stringify(data);
+  const f = magFile(g);
+  if (f) f.setContent(s); else magFolder().createFile('group-' + g + '.json', s, MimeType.PLAIN_TEXT);
+}
+function magInFolder(file) {
+  const fid = magFolder().getId();
+  const ps = file.getParents();
+  while (ps.hasNext()) if (ps.next().getId() === fid) return true;
+  return false;
+}
+
+/** 조 매거진의 글과 사진 목록 (사진 내용은 magPhotoGet으로 한 장씩) */
+function magGet(e) {
+  const g = magGroup(e.parameter.g);
+  const m = magRead(g);
+  return { ok: true, mag: true, g: g, fields: m.fields, photos: m.photos, updated: m.updated, locked: !!m.locked };
+}
+function magPhotoGet(e) {
+  const file = DriveApp.getFileById(String(e.parameter.id || ''));
+  if (!magInFolder(file)) return { ok: false };
+  return { ok: true, data: file.getBlob().getDataAsString() };
+}
+
+/** 바뀐 글 칸만 받아서 합칩니다. 같은 조 친구가 다른 칸을 고쳐도 서로 덮어쓰지 않습니다. */
+function magSave(d) {
+  const g = magGroup(d.g);
+  return withLock(() => {
+    const m = magRead(g);
+    if (m.locked) return { ok: false, locked: true, error: MAG_LOCKED_MSG };
+    const f = d.fields || {};
+    let n = 0;
+    Object.keys(f).slice(0, 300).forEach(k => {
+      if (!/^(e\d{1,4}|zep)$/.test(k)) return;
+      m.fields[k] = String(f[k] == null ? '' : f[k]).slice(0, MAG_FIELD_MAX);
+      n++;
+    });
+    magWrite(g, m);
+    return { ok: true, saved: n, updated: m.updated };
+  });
+}
+function magPhotoSave(d) {
+  const g = magGroup(d.g);
+  const slot = String(d.slot || '');
+  if (!/^[a-z0-9-]{1,30}$/.test(slot)) return { ok: false, error: '사진 칸을 찾지 못했어요.' };
+  const data = String(d.data || '');
+  if (!/^data:image\/(jpeg|png|webp);base64,/.test(data) || data.length > MAG_PHOTO_MAX) {
+    return { ok: false, error: '사진이 너무 크거나 형식이 맞지 않아요.' };
+  }
+  const file = magFolder().createFile('g' + g + '-' + slot + '-' + Date.now() + '.txt', data, MimeType.PLAIN_TEXT);
+  return withLock(() => {
+    const m = magRead(g);
+    if (m.locked) { file.setTrashed(true); return { ok: false, locked: true, error: MAG_LOCKED_MSG }; }
+    const old = m.photos[slot];
+    if (old && old.id) { try { DriveApp.getFileById(old.id).setTrashed(true); } catch (e) {} }
+    m.photos[slot] = { id: file.getId(), t: Date.now() };
+    magWrite(g, m);
+    return { ok: true, id: file.getId() };
+  });
+}
+function magPhotoDel(d) {
+  const g = magGroup(d.g);
+  const slot = String(d.slot || '');
+  return withLock(() => {
+    const m = magRead(g);
+    if (m.locked) return { ok: false, locked: true, error: MAG_LOCKED_MSG };
+    const old = m.photos[slot];
+    if (old && old.id) { try { DriveApp.getFileById(old.id).setTrashed(true); } catch (e) {} }
+    delete m.photos[slot];
+    magWrite(g, m);
+    return { ok: true };
+  });
+}
+
+/** 선생님 화면: 조별 저장 현황 */
+function magTeacher(d) {
+  if (!checkKey(d.key)) return { ok: false, error: '비밀번호가 맞지 않아요.' };
+  const groups = [];
+  for (let g = 1; g <= MAG_GROUPS; g++) {
+    const m = magRead(g);
+    groups.push({ g: g, updated: m.updated, fields: Object.keys(m.fields).length, photos: Object.keys(m.photos).length, locked: !!m.locked });
+  }
+  return { ok: true, groups: groups };
+}
+/** 발표가 끝난 조는 잠가서 더 이상 고칠 수 없게 합니다. */
+function magLock(d) {
+  if (!checkKey(d.key)) return { ok: false, error: '비밀번호가 맞지 않아요.' };
+  const g = magGroup(d.g);
+  return withLock(() => {
+    const m = magRead(g);
+    m.locked = !!d.locked;
+    magWrite(g, m, false);
+    return { ok: true, locked: m.locked };
+  });
 }
 
 function checkKey(key) {

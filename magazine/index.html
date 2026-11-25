@@ -204,32 +204,131 @@ figure{margin:0}
   .pages{zoom:.46}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- 조별 공동 편집 ---------- */
+.toolbar{flex-direction:column;align-items:stretch;gap:6px}
+.tb-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.groups{display:flex;gap:4px;flex-wrap:wrap}
+.groups a{font-family:var(--head);font-weight:700;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px}
+.groups a:hover{background:var(--sky)}
+.groups a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.groups a:focus-visible,.gcard:focus-visible{outline:2px solid var(--sky-ink);outline-offset:2px}
+.toolbar .status{margin-left:auto;font-size:12.5px;color:var(--sky-ink)}
+.toolbar .status.bad{color:#b4523f}
+.toolbar .tip{margin-left:0;font-size:12px}
+.no-g .g-only{display:none}
+.lockbar{max-width:210mm;margin:12px auto 0;padding:10px 14px;background:var(--blossom);border-radius:8px;font-size:13px;text-align:center}
+.url-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.url-row input{flex:1;min-width:220px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit}
+.url-row button{font:inherit;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--sky);cursor:pointer}
+
+.landing{max-width:760px;margin:40px auto;padding:0 16px;display:flex;flex-direction:column;gap:14px}
+.landing h1{font-size:30px}
+.landing-sub{color:var(--soft)}
+.gcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:8px}
+.gcard{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);background:#fff;border:1px solid var(--line);border-top:5px solid var(--sky);border-radius:10px;padding:16px;transition:transform .15s}
+.gcard:nth-child(2){border-top-color:var(--blossom)}.gcard:nth-child(3){border-top-color:var(--mint)}.gcard:nth-child(4){border-top-color:var(--butter)}.gcard:nth-child(5){border-top-color:#d9d2f0}
+.gcard:hover{transform:translateY(-2px);border-color:var(--ink)}
+.gnum{font-family:var(--display);font-weight:900;font-size:40px;line-height:1;color:var(--sky-ink)}
+.glabel{font-family:var(--head);font-weight:700;font-size:16px}
+.ggo{font-size:12px;color:var(--soft)}
+
+/* 사진 칸: 사진 추가 버튼 + 끌어다 놓기 */
+.ph .ph-add{position:absolute;left:50%;bottom:2.5mm;transform:translateX(-50%);padding:.8mm 3.5mm;font-size:8pt;white-space:nowrap;color:var(--sky-ink);background:#fff;border:.3mm solid var(--sky-ink);border-radius:99px}
+.ph:hover .ph-add{background:var(--sky)}
+.ph.mingti .ph-add{display:none}
+.ph .ph-tools{position:absolute;top:1.5mm;right:1.5mm;display:none;gap:1mm;padding:0}
+.ph.filled .ph-tools{display:flex}
+.ph.filled:not(:hover):not(:focus-within) .ph-tools{opacity:0}
+.ph-tools button{font:8pt "Gowun Batang",serif;background:#ffffffee;border:.3mm solid var(--line);border-radius:99px;padding:.4mm 2.5mm;cursor:pointer;color:var(--ink)}
+.ph-tools button:hover{background:var(--sky)}
+.ph.drag{outline:.7mm solid var(--sky-ink);outline-offset:-.7mm;background-color:var(--sky)}
+.ph.drag::after{content:"여기에 놓으세요";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10pt;color:var(--sky-ink);background:#cfe5f4cc}
+.ph.busy::after{content:"사진 올리는 중…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9pt;color:var(--ink);background:#ffffffaa}
+.locked .ph{cursor:default}
+.locked .ph-add,.locked .ph-tools{display:none!important}
+.locked [contenteditable]:hover{background:none}
+
+/* 선생님 관리 */
+.panel-bg{position:fixed;inset:0;z-index:50;background:rgba(30,35,45,.35);display:flex;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
+.panel-bg[hidden]{display:none}
+.panel{width:min(720px,100%);background:#fff;border-radius:12px;padding:20px;font-family:"Gowun Batang",serif;font-size:14px;box-shadow:0 10px 40px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:12px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ink);padding-bottom:8px}
+.panel-head h2{font-size:20px}
+.panel button,.panel .acts a{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-block}
+.panel button:hover,.panel .acts a:hover{background:var(--sky)}
+.panel button:disabled{opacity:.6;cursor:wait}
+.panel .is-locked{background:var(--blossom)}
+.login{display:flex;flex-direction:column;gap:8px}
+.login .row{display:flex;gap:6px}
+.login input{flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.err{color:#b4523f;margin:0}
+.muted{color:var(--soft);font-size:12.5px;margin:0}
+.tt{width:100%;border-collapse:collapse}
+.tt th,.tt td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tt thead th{font-size:12px;color:var(--soft);font-weight:400}
+.tt tbody th{font-family:var(--head);font-size:16px}
+.tt td{font-variant-numeric:tabular-nums}
+.acts{display:flex;flex-wrap:wrap;gap:4px}
+.row-end{display:flex;gap:6px;justify-content:flex-end;margin:0}
+
+/* PDF용 숨은 작업대 */
+#pdfStage{position:absolute;left:-12000px;top:0;width:210mm;counter-reset:pg}
+#pdfStage .page{box-shadow:none;margin:0}
+#pdfStage .ph-add,#pdfStage .ph-tools,#pdfStage .ph:not(.filled) span{display:none!important}
+#pdfStage .ph:not(.filled){border-color:#cfd6df}
+
+@media print{
+  .lockbar,.landing,.panel-bg,#pdfStage{display:none!important}
+  .ph-add,.ph-tools{display:none!important}
+}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <a class="home" href="../">← 2학년 8반</a>
-  <b>ZEP Magazine</b>
-  <button type="button" id="btnPrint">인쇄 / PDF 저장</button>
-  <button type="button" id="btnUrl">ZEP 링크 입력 → QR 만들기</button>
-  <button type="button" id="btnSave">파일로 백업</button>
-  <button type="button" id="btnLoad">백업 불러오기</button>
-  <button type="button" id="btnReset">처음 상태로</button>
-  <span class="status" id="status" aria-live="polite"></span>
-  <span class="tip">글자를 눌러 고치고, 점선 칸을 누르면 사진이 들어가요. 이 기기·브라우저에 자동 저장되니, 다른 컴퓨터로 옮기려면 파일로 백업하세요.</span>
+  <div class="tb-row">
+    <a class="home" href="../">← 2학년 8반</a>
+    <b>ZEP Magazine</b>
+    <nav class="groups" id="groupNav" aria-label="조 선택 (새 창에서 열림)"></nav>
+    <span class="status" id="status" aria-live="polite"></span>
+  </div>
+  <div class="tb-row">
+    <button type="button" id="btnUrl" class="g-only">ZEP 링크 입력 → QR 만들기</button>
+    <button type="button" id="btnPrint" class="g-only">인쇄</button>
+    <button type="button" id="btnTeacher">선생님 관리</button>
+    <span class="tip g-only">글자를 눌러 고치고, 사진 칸에 ‘사진 추가’를 누르거나 사진을 끌어다 놓으세요. 같은 조 친구들과 함께 고칠 수 있고 자동으로 저장돼요.</span>
+  </div>
 </div>
 <div class="notice" id="notice"></div>
+<div class="lockbar" id="lockbar" hidden>선생님이 잠근 매거진이에요. 발표용으로 보기만 할 수 있어요.</div>
 <input type="file" id="fileIn" accept="image/*" hidden>
-<input type="file" id="backupIn" accept=".json,application/json" hidden>
 
-<main class="pages" id="pages">
+<section class="landing" id="landing" hidden>
+  <p class="kicker">2학년 8반 · ZEP Magazine</p>
+  <h1>우리 조 매거진을 골라 주세요</h1>
+  <p class="landing-sub">버튼을 누르면 새 창에서 열려요. 쓰는 내용은 사이트에 자동으로 저장되고, 같은 조 친구들과 함께 고칠 수 있어요.</p>
+  <div class="gcards" id="gcards"></div>
+</section>
+
+<main class="pages" id="pages" hidden></main>
+
+<div class="panel-bg" id="panel" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+    <div class="panel-head"><h2 id="panelTitle">선생님 관리</h2><button type="button" class="x" id="panelClose" aria-label="닫기">닫기</button></div>
+    <div id="panelBody"></div>
+  </div>
+</div>
+
+<div id="pdfStage" aria-hidden="true"></div>
+
+<template id="tpl">
 
 <!-- ===================== P1 표지 ===================== -->
 <section class="page cover">
   <div class="mast">
     <div class="title">ZEP<br><i>Magazine</i></div>
-    <div class="issue"><span class="ed">2026 · Vol. 01</span><br><span class="ed">신원고 2학년 8반</span><br><span class="ed">진로 × 에듀테크 프로젝트</span></div>
+    <div class="issue"><span class="ed">2026 · Vol. 01</span><br><span class="ed">신원고 2학년 8반 · {{G}}조</span><br><span class="ed">진로 × 에듀테크 프로젝트</span></div>
   </div>
   <div class="cover-sub"><span class="ed">메타버스로 만나는 우리 학교, 우리 동네</span><span class="ed">1학기 ~ 2학기 프로젝트 결과 보고 · 한국어 / English</span></div>
   <h1 class="cover-head ed">교실 밖으로 걸어 나간<br><em>우리 동네 메타버스</em></h1>
@@ -282,7 +381,7 @@ figure{margin:0}
       <div class="step"><span class="when ed">2학기 · 3단계</span><h3 class="ed">링크 공유 · 초대의 글</h3><p class="ed">완성된 공간의 URL을 확보하고 초대 이유와 활용 방법을 담은 글 작성</p></div>
     </div>
   </div>
-  <div class="folio"><span class="pn"></span><span class="ed">신원고 2학년 8반</span></div>
+  <div class="folio"><span class="pn"></span><span class="ed">신원고 2학년 8반 · {{G}}조</span></div>
 </section>
 
 <!-- ===================== P3 PART 1 개요 ===================== -->
@@ -354,7 +453,7 @@ figure{margin:0}
         <dt>위치</dt><dd class="ed">경기도 고양시 ○○구 ○○로</dd>
         <dt>가는 길</dt><dd class="ed">학교에서 버스로 ○○분</dd>
         <dt>추천 시기</dt><dd class="ed">봄 · 가을 저녁</dd>
-        <dt>모둠</dt><dd class="ed">○모둠 (학번 / 성명)</dd>
+        <dt>모둠</dt><dd class="ed">{{G}}조 (학번 / 성명)</dd>
       </dl>
       <p class="pull ed">“명소를 한 문장으로 소개하는 인상적인 문구를 넣어 주세요.”</p>
       <div class="ph" data-ph="spot-sub"><span>보조 사진</span></div>
@@ -383,7 +482,7 @@ figure{margin:0}
         <dt>Location</dt><dd class="ed">○○-ro, ○○-gu, Goyang-si, Gyeonggi-do</dd>
         <dt>Getting there</dt><dd class="ed">○○ minutes by bus from school</dd>
         <dt>Best time</dt><dd class="ed">Spring and autumn evenings</dd>
-        <dt>Team</dt><dd class="ed">Group ○ (Student ID / Name)</dd>
+        <dt>Team</dt><dd class="ed">Group {{G}} (Student ID / Name)</dd>
       </dl>
       <p class="pull ed">“Write a catchy one-line introduction to the spot.”</p>
       <div class="ph" data-ph="spot-sub-en"><span>Extra photo</span></div>
@@ -540,168 +639,487 @@ figure{margin:0}
   </div>
 </section>
 
-</main>
+</template>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
-  var KEY = "zep-magazine-v2";
-  var statusEl = document.getElementById("status");
-  var pages = document.getElementById("pages");
-  var notice = document.getElementById("notice");
-  var fileIn = document.getElementById("fileIn");
-  var original = pages.innerHTML;
-  var currentPh = null;
+"use strict";
+/* 칭찬 기록부·목표 트리와 같은 구글 시트 웹 앱 주소 */
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxS1C3r6wAZvy_AyYoahWwrkz7-taDjCB9UM8u7buaw2ozb3D7f7vSwRtCCCD6xqVOfdw/exec";
+var GROUPS = 5;
+var H2C = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+var JSPDF = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
 
-  function say(msg){ notice.textContent = msg; notice.classList.add("show"); }
+function $(id){ return document.getElementById(id); }
+var params = new URLSearchParams(location.search);
+var G = parseInt(params.get("g"), 10);
+var hasG = G >= 1 && G <= GROUPS;
+var pagesEl = $("pages"), notice = $("notice"), statusEl = $("status"), fileIn = $("fileIn");
+var TPL = $("tpl").innerHTML;
 
-  function store(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
-  function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+var mode = "local";            // server: 사이트에 저장 / local: 이 기기에만
+var state = { fields:{}, photos:{}, locked:false };
+var dirty = new Map();         // 아직 사이트에 못 보낸 칸
+var photoCache = {};
+var locked = false, sending = false, sendTimer = null, currentPh = null;
+var LKEY = "zep-mag-g" + G;
 
-  function wire(){
-    pages.querySelectorAll(".ed").forEach(function(el){
-      el.setAttribute("contenteditable","true");
-      el.setAttribute("spellcheck","false");
+/* ---------- 공통 ---------- */
+function say(msg){ notice.textContent = msg; notice.classList.add("show"); }
+function hush(){ notice.classList.remove("show"); }
+function setStatus(t, bad){ statusEl.textContent = t; statusEl.classList.toggle("bad", !!bad); }
+function hhmm(ms){ var d = ms ? new Date(ms) : new Date(); return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); }
+function when(ms){ if(!ms) return "아직 없음"; var d = new Date(ms); return (d.getMonth()+1) + "/" + d.getDate() + " " + hhmm(ms); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function ssGet(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+function ssSet(k,v){ try{ if(v==null) sessionStorage.removeItem(k); else sessionStorage.setItem(k,v); }catch(e){} }
+
+function api(q){
+  return fetch(SCRIPT_URL + "?" + q + "&t=" + Date.now()).then(function(r){ return r.json(); });
+}
+function post(body){
+  return fetch(SCRIPT_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify(body) })
+    .then(function(r){ return r.json(); });
+}
+
+/* 다른 친구가 쓴 글을 화면에 넣기 전에 허용한 태그만 남깁니다 */
+var OK_TAGS = { BR:1, P:1, DIV:1, B:1, I:1, EM:1, STRONG:1, U:1, SPAN:1 };
+function clean(html){
+  var t = document.createElement("template");
+  t.innerHTML = String(html || "");
+  (function walk(node){
+    Array.prototype.slice.call(node.childNodes).forEach(function(c){
+      if(c.nodeType === 3) return;
+      if(c.nodeType !== 1){ c.remove(); return; }
+      if(!OK_TAGS[c.tagName]){ c.replaceWith(document.createTextNode(c.textContent)); return; }
+      var isKey = c.classList.contains("key"), ta = c.style && c.style.textAlign;
+      Array.prototype.slice.call(c.attributes).forEach(function(a){ c.removeAttribute(a.name); });
+      if(isKey) c.className = "key";
+      if(ta === "right" || ta === "center") c.style.textAlign = ta;
+      walk(c);
     });
-    pages.querySelectorAll(".ph").forEach(function(ph){
-      ph.setAttribute("tabindex","0");
-      ph.setAttribute("role","button");
-      ph.setAttribute("aria-label","사진 넣기");
-    });
-    var u = load(KEY+"-url"); if(u) makeQR(u);
+  })(t.content);
+  return t.innerHTML;
+}
+
+/* ---------- 매거진 만들기 ---------- */
+function build(box, g){
+  box.innerHTML = TPL.split("{{G}}").join(String(g));
+  box.querySelectorAll(".ed").forEach(function(el, i){ el.dataset.k = "e" + i; });
+  box.querySelectorAll(".ph").forEach(function(ph){
+    ph.insertAdjacentHTML("beforeend",
+      '<span class="ph-add">＋ 사진 추가 · 끌어다 놓기</span>' +
+      '<span class="ph-tools"><button type="button" data-act="change">바꾸기</button><button type="button" data-act="del">지우기</button></span>');
+  });
+}
+function applyFields(box, fields, skipBusy){
+  fields = fields || {};
+  Object.keys(fields).forEach(function(k){
+    if(k === "zep") return;
+    var el = box.querySelector('[data-k="' + k + '"]');
+    if(!el) return;
+    if(skipBusy && (el === document.activeElement || el.contains(document.activeElement) || dirty.has(k))) return;
+    var v = clean(fields[k]);
+    if(el.innerHTML !== v){ el.innerHTML = v; }
+    el.classList.remove("placeholder");
+  });
+  if(fields.zep && !(skipBusy && dirty.has("zep"))) makeQR(box, fields.zep);
+}
+function setPh(ph, src){
+  if(src){ ph.style.backgroundImage = "url(" + src + ")"; ph.classList.add("filled"); }
+  else { ph.style.backgroundImage = ""; ph.classList.remove("filled"); }
+}
+function getPhoto(id){
+  if(photoCache[id]) return Promise.resolve(photoCache[id]);
+  return api("type=magPhoto&id=" + encodeURIComponent(id)).then(function(r){
+    if(!r || !r.ok) throw new Error("photo");
+    photoCache[id] = r.data; return r.data;
+  });
+}
+function applyPhotos(box, photos){
+  photos = photos || {};
+  var jobs = [];
+  box.querySelectorAll(".ph").forEach(function(ph){
+    if(ph.dataset.busy) return;
+    var p = photos[ph.dataset.ph];
+    if(!p){ if(ph.dataset.pid){ delete ph.dataset.pid; setPh(ph, null); } return; }
+    if(ph.dataset.pid === p.id) return;
+    ph.dataset.pid = p.id;
+    jobs.push(getPhoto(p.id).then(function(src){ if(ph.dataset.pid === p.id) setPh(ph, src); }).catch(function(){}));
+  });
+  return Promise.all(jobs);
+}
+function makeQR(box, url){
+  box.querySelectorAll(".urlText").forEach(function(t){ t.textContent = url; });
+  box.querySelectorAll(".qrbox").forEach(function(q){
+    q.innerHTML = "";
+    if(window.QRCode) new QRCode(q, { text:url, width:300, height:300, colorDark:"#2a2d33", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M });
+    else q.textContent = "QR 도구를 불러오지 못했어요";
+  });
+}
+
+/* ---------- 조 버튼 (새 창) ---------- */
+function groupLinks(){
+  var nav = $("groupNav"), cards = $("gcards");
+  for(var g = 1; g <= GROUPS; g++){
+    var a = document.createElement("a");
+    a.href = "?g=" + g; a.target = "zep-g" + g; a.rel = "noopener";
+    a.textContent = g + "조";
+    if(g === G){ a.className = "on"; a.setAttribute("aria-current", "page"); }
+    nav.appendChild(a);
+    var c = document.createElement("a");
+    c.href = "?g=" + g; c.target = "zep-g" + g; c.rel = "noopener"; c.className = "gcard";
+    c.innerHTML = '<span class="gnum">' + g + '</span><span class="glabel">' + g + '조 매거진</span><span class="ggo">새 창에서 열기 ↗</span>';
+    cards.appendChild(c);
   }
+}
 
-  var timer;
-  function save(){
-    clearTimeout(timer);
-    timer = setTimeout(function(){
-      if(store(KEY, pages.innerHTML)){
-        var d = new Date();
-        statusEl.textContent = "자동 저장됨 " + String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
-      } else {
-        statusEl.textContent = "자동 저장 안 됨";
-        say("사진이 많아 브라우저 저장 공간이 꽉 찼어요. ‘파일로 백업’을 눌러 내 파일로 저장해 두세요. 인쇄는 그대로 할 수 있어요.");
-      }
-    }, 400);
-  }
-
-  var saved = load(KEY);
-  if(saved) pages.innerHTML = saved;
-  wire();
-
-  pages.addEventListener("input", function(e){
-    if(e.target.classList) e.target.classList.remove("placeholder");
-    save();
+/* ---------- 학생 화면: 저장 ---------- */
+function saveLocal(){
+  var all = Object.assign({}, state.fields, Object.fromEntries(dirty));
+  lsSet(LKEY, JSON.stringify({ fields:all, pending:Object.fromEntries(dirty) }));
+}
+function scheduleSend(ms){ clearTimeout(sendTimer); sendTimer = setTimeout(send, ms); }
+function send(){
+  if(sending || !dirty.size || locked) return;
+  if(mode !== "server"){ setStatus("이 기기에만 임시 저장됨", true); return; }
+  sending = true;
+  var batch = Object.fromEntries(dirty);
+  setStatus("저장 중…");
+  post({ action:"magSave", g:G, fields:batch }).then(function(r){
+    if(r && r.locked){ dirty.clear(); setLocked(true); throw new Error(r.error); }
+    if(!r || !r.ok) throw new Error((r && r.error) || "save");
+    Object.keys(batch).forEach(function(k){ if(dirty.get(k) === batch[k]) dirty.delete(k); });
+    Object.assign(state.fields, batch);
+    saveLocal();
+    setStatus("자동 저장됨 " + hhmm());
+  }).catch(function(e){
+    if(locked) return;
+    setStatus("저장 실패 · 인터넷을 확인해 주세요 (이 기기에 보관 중, 다시 시도해요)", true);
+    setTimeout(function(){ scheduleSend(0); }, 8000);
+  }).then(function(){
+    sending = false;
+    if(dirty.size && !locked) scheduleSend(1500);
   });
-  // 붙여넣기는 글자만
-  pages.addEventListener("paste", function(e){
-    if(!e.target.closest("[contenteditable]")) return;
-    e.preventDefault();
-    var t = (e.clipboardData||window.clipboardData).getData("text");
-    document.execCommand("insertText", false, t);
-  });
+}
+function flushBeacon(){
+  if(mode !== "server" || !dirty.size || locked || !navigator.sendBeacon) return;
+  try{
+    navigator.sendBeacon(SCRIPT_URL, new Blob([JSON.stringify({ action:"magSave", g:G, fields:Object.fromEntries(dirty) })], { type:"text/plain;charset=utf-8" }));
+  }catch(e){}
+}
+function setLocked(v){
+  locked = !!v;
+  pagesEl.classList.toggle("locked", locked);
+  $("lockbar").hidden = !locked;
+  pagesEl.querySelectorAll("[data-k]").forEach(function(el){ el.setAttribute("contenteditable", locked ? "false" : "true"); });
+  pagesEl.querySelectorAll(".ph").forEach(function(ph){ ph.setAttribute("tabindex", locked ? "-1" : "0"); });
+}
+function poll(){
+  if(mode !== "server" || document.hidden) return;
+  api("type=mag&g=" + G).then(function(r){
+    if(!r || !r.mag) return;
+    applyFields(pagesEl, r.fields, true);
+    state.fields = Object.assign({}, r.fields);
+    state.photos = r.photos || {};
+    applyPhotos(pagesEl, state.photos);
+    if(!!r.locked !== locked) setLocked(r.locked);
+  }).catch(function(){});
+}
 
-  function pick(ph){ currentPh = ph; fileIn.value = ""; fileIn.click(); }
-  pages.addEventListener("click", function(e){ var ph = e.target.closest(".ph"); if(ph) pick(ph); });
-  pages.addEventListener("keydown", function(e){
-    var ph = e.target.closest && e.target.closest(".ph");
-    if(ph && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); pick(ph); }
-  });
-
-  fileIn.addEventListener("change", function(){
-    var f = fileIn.files && fileIn.files[0];
-    if(!f || !currentPh) return;
-    var ph = currentPh;
+/* ---------- 학생 화면: 사진 ---------- */
+function compress(file){
+  return new Promise(function(res, rej){
     var r = new FileReader();
+    r.onerror = rej;
     r.onload = function(){
       var img = new Image();
+      img.onerror = function(){ rej(new Error("decode")); };
       img.onload = function(){
-        var max = 1200, w = img.width, h = img.height, s = Math.min(1, max/Math.max(w,h));
+        var max = 1200, s = Math.min(1, max / Math.max(img.width, img.height));
         var c = document.createElement("canvas");
-        c.width = Math.round(w*s); c.height = Math.round(h*s);
-        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-        ph.style.backgroundImage = "url(" + c.toDataURL("image/jpeg",0.8) + ")";
-        ph.classList.add("filled");
-        save();
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+        x.drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL("image/jpeg", 0.8));
       };
       img.src = r.result;
     };
-    r.readAsDataURL(f);
+    r.readAsDataURL(file);
   });
+}
+function handleFile(ph, f){
+  if(locked || !ph || !f) return;
+  if(!/^image\//.test(f.type)){ say("사진 파일만 넣을 수 있어요."); return; }
+  compress(f).then(function(data){
+    setPh(ph, data);
+    if(mode !== "server"){ setStatus("사진이 이 화면에만 보여요 (사이트 저장 연결 안 됨)", true); return; }
+    ph.dataset.busy = "1"; ph.classList.add("busy");
+    setStatus("사진 올리는 중…");
+    return post({ action:"magPhoto", g:G, slot:ph.dataset.ph, data:data }).then(function(r){
+      if(r && r.locked) setLocked(true);
+      if(!r || !r.ok) throw new Error((r && r.error) || "photo");
+      photoCache[r.id] = data; ph.dataset.pid = r.id;
+      state.photos[ph.dataset.ph] = { id:r.id };
+      setStatus("사진 저장됨 " + hhmm());
+    }).catch(function(e){
+      setStatus("사진 저장 실패 · 다시 넣어 주세요", true);
+      if(e && e.message && e.message !== "photo" && e.message.length < 60) say(e.message);
+    }).then(function(){ delete ph.dataset.busy; ph.classList.remove("busy"); });
+  }).catch(function(){ say("이 사진은 열 수 없어요. JPG나 PNG 사진으로 넣어 주세요. (아이폰 HEIC 사진은 캡처해서 넣으면 돼요)"); });
+}
+function delPhoto(ph){
+  if(locked) return;
+  setPh(ph, null); delete ph.dataset.pid;
+  delete state.photos[ph.dataset.ph];
+  if(mode !== "server") return;
+  setStatus("저장 중…");
+  post({ action:"magPhotoDel", g:G, slot:ph.dataset.ph }).then(function(r){
+    if(!r || !r.ok) throw 0; setStatus("자동 저장됨 " + hhmm());
+  }).catch(function(){ setStatus("사진 지우기 실패 · 다시 시도해 주세요", true); });
+}
+function pick(ph){ if(locked) return; currentPh = ph; fileIn.value = ""; fileIn.click(); }
 
-  function makeQR(url){
-    document.querySelectorAll(".urlText").forEach(function(t){ t.textContent = url; });
-    document.querySelectorAll(".qrbox").forEach(function(box){
-      box.innerHTML = "";
-      if(window.QRCode){
-        new QRCode(box,{text:url,width:300,height:300,colorDark:"#2a2d33",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
-      } else {
-        box.textContent = "QR 도구를 불러오지 못했어요";
-      }
-    });
-  }
-
-  // 파일로 백업 / 불러오기
-  document.getElementById("btnSave").addEventListener("click", function(){
-    var data = JSON.stringify({app:"zep-magazine", v:2, html:pages.innerHTML, url:load(KEY+"-url")||""});
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([data],{type:"application/json"}));
-    var d = new Date();
-    a.download = "ZEP매거진_백업_" + (d.getMonth()+1) + "월" + d.getDate() + "일.json";
-    document.body.appendChild(a); a.click(); a.remove();
-    say("백업 파일을 내려받았어요. 다른 컴퓨터에서는 ‘백업 불러오기’로 이어서 작업할 수 있어요.");
+function wireEditing(){
+  pagesEl.addEventListener("input", function(e){
+    var el = e.target.closest && e.target.closest("[data-k]");
+    if(!el || locked) return;
+    el.classList.remove("placeholder");
+    dirty.set(el.dataset.k, el.innerHTML);
+    saveLocal();
+    setStatus("입력 중…");
+    scheduleSend(1500);
   });
-  var backupIn = document.getElementById("backupIn");
-  document.getElementById("btnLoad").addEventListener("click", function(){ backupIn.value=""; backupIn.click(); });
-  backupIn.addEventListener("change", function(){
-    var f = backupIn.files && backupIn.files[0]; if(!f) return;
-    var r = new FileReader();
-    r.onload = function(){
-      try{
-        var d = JSON.parse(r.result);
-        if(d.app!=="zep-magazine" || !d.html) throw 0;
-        pages.innerHTML = d.html;
-        if(d.url) store(KEY+"-url", d.url);
-        wire(); save();
-        say("백업을 불러왔어요.");
-      }catch(e){ say("ZEP 매거진 백업 파일이 아니에요. ‘파일로 백업’으로 받은 .json 파일을 골라 주세요."); }
-    };
-    r.readAsText(f);
+  pagesEl.addEventListener("paste", function(e){
+    if(!e.target.closest || !e.target.closest("[contenteditable]")) return;
+    var t = (e.clipboardData || window.clipboardData).getData("text");
+    e.preventDefault();
+    document.execCommand("insertText", false, t);
   });
+  pagesEl.addEventListener("click", function(e){
+    var ph = e.target.closest(".ph"); if(!ph) return;
+    var btn = e.target.closest("button[data-act]");
+    if(btn){ e.stopPropagation(); if(btn.dataset.act === "del") delPhoto(ph); else pick(ph); return; }
+    if(!ph.classList.contains("filled")) pick(ph);
+  });
+  pagesEl.addEventListener("keydown", function(e){
+    var ph = e.target.classList && e.target.classList.contains("ph") ? e.target : null;
+    if(ph && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); pick(ph); }
+  });
+  fileIn.addEventListener("change", function(){ handleFile(currentPh, fileIn.files && fileIn.files[0]); });
 
-  // 링크 입력: 페이지 안에서 처리 (prompt 창 대신)
-  document.getElementById("btnUrl").addEventListener("click", function(){
-    var wrap = document.createElement("div");
-    wrap.style.cssText = "display:flex;gap:6px;align-items:center;flex-wrap:wrap";
-    wrap.innerHTML = '<label for="zepUrl">ZEP 링크</label><input id="zepUrl" type="url" placeholder="https://zep.us/play/..." style="flex:1;min-width:220px;padding:6px 8px;border:1px solid #ccd;border-radius:6px;font:inherit"><button type="button" id="zepOk" style="font:inherit;padding:6px 12px;border-radius:999px;border:1px solid #ccd;background:#cfe5f4;cursor:pointer">QR 만들기</button>';
-    notice.innerHTML = ""; notice.appendChild(wrap); notice.classList.add("show");
-    var inp = document.getElementById("zepUrl");
-    inp.value = load(KEY+"-url") || "";
-    inp.focus();
-    function ok(){
-      var v = inp.value.trim(); if(!v) return;
-      makeQR(v); store(KEY+"-url", v);
-      notice.classList.remove("show");
-      document.querySelector(".qrbox").scrollIntoView({behavior:"smooth",block:"center"});
-      save();
+  var dragPh = null;
+  pagesEl.addEventListener("dragover", function(e){
+    var ph = e.target.closest(".ph");
+    if(!ph || locked) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = "copy";
+    if(dragPh !== ph){ if(dragPh) dragPh.classList.remove("drag"); dragPh = ph; ph.classList.add("drag"); }
+  });
+  pagesEl.addEventListener("dragleave", function(e){
+    if(dragPh && !dragPh.contains(e.relatedTarget)){ dragPh.classList.remove("drag"); dragPh = null; }
+  });
+  pagesEl.addEventListener("drop", function(e){
+    var ph = e.target.closest(".ph");
+    if(dragPh){ dragPh.classList.remove("drag"); dragPh = null; }
+    if(!ph) return;
+    e.preventDefault();
+    handleFile(ph, e.dataTransfer.files && e.dataTransfer.files[0]);
+  });
+  // 사진 칸 밖에 떨어뜨려도 사진 파일이 새 탭으로 열리지 않게
+  window.addEventListener("dragover", function(e){ e.preventDefault(); });
+  window.addEventListener("drop", function(e){ e.preventDefault(); });
+
+  document.addEventListener("visibilitychange", function(){ if(document.hidden) flushBeacon(); else poll(); });
+  window.addEventListener("pagehide", flushBeacon);
+}
+
+function initGroup(){
+  document.title = G + "조 · ZEP 매거진";
+  pagesEl.hidden = false;
+  build(pagesEl, G);
+  setLocked(false);
+  var local = null;
+  try{ local = JSON.parse(lsGet(LKEY) || "null"); }catch(e){}
+  if(local && local.fields){ state.fields = local.fields; applyFields(pagesEl, local.fields); }
+  wireEditing();
+  setStatus("불러오는 중…");
+  api("type=mag&g=" + G).then(function(r){
+    if(!r || !r.mag) throw new Error("old");
+    mode = "server";
+    state = { fields:r.fields || {}, photos:r.photos || {}, locked:!!r.locked };
+    applyFields(pagesEl, state.fields);
+    setLocked(state.locked);
+    if(local && local.pending && !locked){
+      Object.keys(local.pending).forEach(function(k){
+        dirty.set(k, local.pending[k]);
+        var el = pagesEl.querySelector('[data-k="' + k + '"]');
+        if(el) el.innerHTML = clean(local.pending[k]);
+      });
+      if(dirty.size) scheduleSend(500);
     }
-    document.getElementById("zepOk").addEventListener("click", ok);
-    inp.addEventListener("keydown", function(e){ if(e.key==="Enter") ok(); });
+    setStatus(r.updated ? "마지막 저장 " + when(r.updated) : "새 매거진이에요. 쓰는 대로 자동 저장돼요");
+    return applyPhotos(pagesEl, state.photos);
+  }).catch(function(e){
+    mode = "local";
+    if(e && e.message === "old"){
+      setStatus("사이트 저장 준비 중 · 이 기기에만 임시 저장됨", true);
+      say("선생님이 구글 시트 코드를 업데이트하면 사이트에 저장돼요. 그 전까지는 이 기기에만 임시로 보관됩니다.");
+    } else {
+      setStatus("인터넷 연결 확인 · 이 기기에만 임시 저장됨", true);
+    }
   });
+  setInterval(poll, 12000);
+}
 
-  document.getElementById("btnPrint").addEventListener("click", function(){
-    say("인쇄 설정: 용지 A4, 여백 없음, ‘배경 그래픽’ 체크. PDF로 저장하려면 대상에서 ‘PDF로 저장’을 고르세요.");
-    setTimeout(function(){ try{ window.print(); }catch(e){} }, 50);
-  });
+/* ---------- 상단 버튼 ---------- */
+$("btnPrint").addEventListener("click", function(){
+  say("인쇄 설정: 용지 A4, 여백 없음, ‘배경 그래픽’ 체크.");
+  setTimeout(function(){ try{ window.print(); }catch(e){} }, 50);
+});
+$("btnUrl").addEventListener("click", function(){
+  if(locked) return;
+  notice.innerHTML = '<span class="url-row"><label for="zepUrl">ZEP 링크</label><input id="zepUrl" type="url" placeholder="https://zep.us/play/..."><button type="button" id="zepOk">QR 만들기</button></span>';
+  notice.classList.add("show");
+  var inp = $("zepUrl");
+  inp.value = state.fields.zep || "";
+  inp.focus();
+  function ok(){
+    var v = inp.value.trim(); if(!v) return;
+    makeQR(pagesEl, v);
+    state.fields.zep = v; dirty.set("zep", v); saveLocal(); scheduleSend(0);
+    hush();
+    var q = pagesEl.querySelector(".qrbox"); if(q) q.scrollIntoView({ behavior:"smooth", block:"center" });
+  }
+  $("zepOk").addEventListener("click", ok);
+  inp.addEventListener("keydown", function(e){ if(e.key === "Enter") ok(); });
+});
 
-  var armed = false;
-  document.getElementById("btnReset").addEventListener("click", function(){
-    var b = this;
-    if(!armed){ armed = true; b.textContent = "한 번 더 누르면 지워져요"; setTimeout(function(){ armed=false; b.textContent="처음 상태로"; }, 3000); return; }
-    try{ localStorage.removeItem(KEY); localStorage.removeItem(KEY+"-url"); }catch(e){}
-    pages.innerHTML = original; wire(); armed=false; b.textContent="처음 상태로";
+/* ---------- 선생님 관리 ---------- */
+var tkey = ssGet("zep-tkey");
+var panel = $("panel"), panelBody = $("panelBody");
+function openPanel(){ panel.hidden = false; if(tkey) loadTeacher(); else showLogin(); }
+function closePanel(){ panel.hidden = true; }
+$("btnTeacher").addEventListener("click", openPanel);
+$("panelClose").addEventListener("click", closePanel);
+panel.addEventListener("click", function(e){ if(e.target === panel) closePanel(); });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !panel.hidden) closePanel(); });
+
+function showLogin(err){
+  panelBody.innerHTML =
+    '<form class="login" id="loginForm"><label for="tkeyIn">교사용 비밀번호 (구글 시트 ‘설정’ B4)</label>' +
+    '<span class="row"><input id="tkeyIn" type="password" inputmode="numeric" autocomplete="off"><button type="submit">들어가기</button></span>' +
+    '<p class="err" id="loginErr"></p></form>';
+  if(err) $("loginErr").textContent = err;
+  $("tkeyIn").focus();
+  $("loginForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var v = $("tkeyIn").value.trim(); if(!v) return;
+    tkey = v; loadTeacher();
   });
+}
+function loadTeacher(){
+  panelBody.innerHTML = '<p class="muted">불러오는 중…</p>';
+  post({ action:"magTeacher", key:tkey }).then(function(r){
+    if(!r || r.ok === undefined) throw new Error("old");
+    if(!r.ok){ tkey = null; ssSet("zep-tkey", null); showLogin(r.error || "비밀번호가 맞지 않아요."); return; }
+    ssSet("zep-tkey", tkey);
+    renderTeacher(r.groups);
+  }).catch(function(){
+    panelBody.innerHTML = '<p class="err">불러오지 못했어요. 구글 시트 코드를 업데이트하고 새 버전으로 배포했는지 확인해 주세요.</p>';
+  });
+}
+function renderTeacher(groups){
+  var rows = groups.map(function(x){
+    return '<tr><th scope="row">' + x.g + '조</th>' +
+      '<td>' + when(x.updated) + '</td>' +
+      '<td>글 ' + x.fields + '칸 · 사진 ' + x.photos + '장</td>' +
+      '<td class="acts">' +
+        '<a href="?g=' + x.g + '" target="zep-g' + x.g + '" rel="noopener">열기 ↗</a>' +
+        '<button type="button" data-pdf="' + x.g + '">PDF 다운</button>' +
+        '<button type="button" data-lock="' + x.g + '" data-on="' + (x.locked ? 1 : 0) + '" class="' + (x.locked ? "is-locked" : "") + '">' + (x.locked ? "잠김 · 풀기" : "잠그기") + '</button>' +
+      '</td></tr>';
+  }).join("");
+  panelBody.innerHTML =
+    '<table class="tt"><thead><tr><th>조</th><th>마지막 저장</th><th>내용</th><th>관리</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<p class="muted">PDF는 A4 10쪽 그대로 내려받아요(한 조에 20~40초). 잠그면 학생들이 더 고칠 수 없고 보기만 돼요. 발표 전에 잠가 두면 안전해요.</p>' +
+    '<p class="row-end"><button type="button" id="refreshT">새로고침</button><button type="button" id="logoutT">나가기</button></p>';
+  panelBody.querySelectorAll("[data-pdf]").forEach(function(b){ b.addEventListener("click", function(){ makePdf(Number(b.dataset.pdf), b); }); });
+  panelBody.querySelectorAll("[data-lock]").forEach(function(b){
+    b.addEventListener("click", function(){
+      b.disabled = true;
+      post({ action:"magLock", key:tkey, g:Number(b.dataset.lock), locked:b.dataset.on !== "1" }).then(function(r){
+        if(!r || !r.ok) throw 0;
+        if(hasG && Number(b.dataset.lock) === G) setLocked(r.locked);
+        loadTeacher();
+      }).catch(function(){ b.disabled = false; b.textContent = "실패 · 다시"; });
+    });
+  });
+  $("refreshT").addEventListener("click", loadTeacher);
+  $("logoutT").addEventListener("click", function(){ tkey = null; ssSet("zep-tkey", null); showLogin(); });
+}
+
+/* ---------- PDF 만들기 ---------- */
+var libs = null;
+function loadLibs(){
+  if(libs) return libs;
+  function load(src){ return new Promise(function(res, rej){ var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+  libs = Promise.all([load(H2C), load(JSPDF)]).catch(function(e){ libs = null; throw e; });
+  return libs;
+}
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+function makePdf(g, btn){
+  var label = btn.textContent, stage = $("pdfStage");
+  function prog(t){ btn.textContent = t; }
+  btn.disabled = true;
+  prog("준비 중…");
+  var dataP = (hasG && g === G)
+    ? Promise.resolve({ fields:Object.assign({}, state.fields, Object.fromEntries(dirty)), photos:state.photos })
+    : api("type=mag&g=" + g);
+  Promise.all([loadLibs(), dataP]).then(function(arr){
+    var data = arr[1] || {};
+    build(stage, g);
+    applyFields(stage, data.fields || {});
+    prog("사진 불러오는 중…");
+    return applyPhotos(stage, data.photos || {});
+  }).then(function(){
+    return (document.fonts && document.fonts.ready) || null;
+  }).then(function(){ return wait(400); }).then(function(){
+    var pdf = new window.jspdf.jsPDF({ unit:"mm", format:"a4", orientation:"portrait", compress:true });
+    var pages = Array.prototype.slice.call(stage.querySelectorAll(".page"));
+    var i = 0;
+    function next(){
+      if(i >= pages.length) return Promise.resolve();
+      prog("PDF 만드는 중 " + (i + 1) + "/" + pages.length);
+      return window.html2canvas(pages[i], { scale:2, backgroundColor:"#fdfcf8", logging:false }).then(function(c){
+        if(i) pdf.addPage();
+        pdf.addImage(c.toDataURL("image/jpeg", 0.9), "JPEG", 0, 0, 210, 297);
+        i++;
+        return next();
+      });
+    }
+    return next().then(function(){ pdf.save(g + "조_ZEP매거진.pdf"); prog("완료!"); });
+  }).catch(function(e){
+    console.log(e);
+    prog("실패 · 다시 시도");
+  }).then(function(){
+    stage.innerHTML = "";
+    setTimeout(function(){ btn.textContent = label; btn.disabled = false; }, 2500);
+  });
+}
+
+/* ---------- 시작 ---------- */
+groupLinks();
+if(hasG){
+  initGroup();
+} else {
+  document.body.classList.add("no-g");
+  $("landing").hidden = false;
+  setStatus("");
+}
 })();
+
 </script>
 </body>
 </html>

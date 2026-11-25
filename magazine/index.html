@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZEP 매거진 · 2학년 8반</title>
+<link rel="icon" href="../goals/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Gaegu:wght@400;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Chosun Ilbo Myungjo";src:url("../fonts/ChosunIlboMyungjo.woff") format("woff");font-display:swap}
+
+:root{
+  --paper:#fdfcf8;
+  --ink:#2a2d33;
+  --soft:#6b7280;
+  --line:#d9dee5;
+  --grid:#edf1f5;
+  --sky:#cfe5f4;
+  --sky-ink:#3d7fae;
+  --blossom:#f6d7de;
+  --mint:#d6eee2;
+  --butter:#f6ecc8;
+  --display:"Playfair Display","Nanum Myeongjo",serif;
+  --head:"Chosun Ilbo Myungjo","Nanum Myeongjo",serif;
+  --body:"Chosun Ilbo Myungjo","Gowun Batang","Nanum Myeongjo",serif;
+  --hand:"Kkubulim","꾸불림체","Gaegu",cursive;
+  /* 레이아웃: A4 세로(210×297mm) 페이지를 쌓고, 페이지마다 모눈 배경 + 얇은 선 + 파스텔 포인트 */
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e9ebee;color:var(--ink);font-family:var(--body);font-size:10.5pt;line-height:1.7;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+/* ---------- 상단 도구 막대 (인쇄되지 않음) ---------- */
+.toolbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:#ffffffee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);font-family:"Gowun Batang",serif;font-size:13px}
+.toolbar .home{color:var(--sky-ink);text-decoration:none;margin-right:4px}
+.toolbar .home:hover{text-decoration:underline}
+.toolbar b{font-family:var(--display);font-size:15px;margin-right:6px}
+.toolbar button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--ink)}
+.toolbar button:hover{background:var(--sky)}
+.toolbar button:focus-visible,[contenteditable]:focus-visible,.ph:focus-visible{outline:2px solid var(--sky-ink);outline-offset:2px}
+.toolbar .tip{color:var(--soft);margin-left:auto}
+.notice{display:none;max-width:210mm;margin:12px auto 0;padding:10px 14px;background:var(--butter);border:1px solid #e6d79c;border-radius:8px;font-size:13px}
+.notice.show{display:block}
+
+/* ---------- 페이지 ---------- */
+.pages{display:flex;flex-direction:column;align-items:center;gap:14mm;padding:12mm 16px 24mm}
+.page{position:relative;width:210mm;height:297mm;overflow:hidden;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:5mm 5mm;box-shadow:0 2px 14px rgba(30,40,60,.12);padding:16mm 16mm 18mm;display:flex;flex-direction:column;gap:6mm}
+.run{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);border-bottom:.3mm solid var(--ink);padding-bottom:2mm}
+.folio{position:absolute;bottom:9mm;left:16mm;right:16mm;display:flex;justify-content:space-between;font-family:var(--display);font-size:8pt;color:var(--soft);border-top:.2mm solid var(--line);padding-top:2mm}
+
+h1,h2,h3{font-family:var(--head);margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+.kicker{font-family:var(--display);font-style:italic;font-size:10pt;color:var(--sky-ink);letter-spacing:.04em}
+.hand{font-family:var(--hand);font-size:14pt;line-height:1.35}
+.tag{display:inline-block;font-family:var(--head);font-size:8pt;font-weight:700;padding:.6mm 3mm;border-radius:99px;background:var(--sky);color:var(--ink)}
+.tag.pink{background:var(--blossom)}.tag.mint{background:var(--mint)}.tag.butter{background:var(--butter)}
+
+/* 사진 자리 */
+.ph{position:relative;border:.3mm dashed #a9b4c2;border-radius:2mm;background:#ffffffb3 center/cover no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--soft);font-family:"Gowun Batang",serif;font-size:9pt;text-align:center;min-height:30mm}
+.ph.filled{border:.3mm solid var(--ink)}
+.ph.filled span{display:none}
+.ph span{padding:2mm}
+
+[contenteditable]{border-radius:1mm}
+[contenteditable]:hover{background:#cfe5f455}
+.placeholder{color:#9aa3ae}
+
+/* ---------- 1. 표지 ---------- */
+.cover{padding:14mm 14mm 16mm}
+.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:.6mm solid var(--ink);padding-bottom:2mm}
+.mast .title{font-family:var(--display);font-weight:900;font-size:62pt;line-height:.9;letter-spacing:-.02em}
+.mast .title i{color:var(--sky-ink)}
+.mast .issue{text-align:right;font-family:var(--display);font-size:9pt;line-height:1.5}
+.cover-sub{display:flex;justify-content:space-between;font-size:9pt;color:var(--soft);font-family:var(--head)}
+.cover-body{flex:1;display:grid;grid-template-columns:1fr 58mm;gap:6mm;min-height:0}
+.cover-body .ph{height:100%}
+.coverlines{display:flex;flex-direction:column;gap:5mm;border-left:.3mm solid var(--ink);padding-left:5mm}
+.coverlines .no{font-family:var(--display);font-size:26pt;font-weight:900;color:var(--sky-ink);line-height:1}
+.coverlines h3{font-size:13pt}
+.coverlines p{font-size:9pt;color:var(--soft)}
+.cover-head{font-family:var(--head);font-weight:800;font-size:24pt;line-height:1.25}
+.cover-head em{font-style:normal;background:linear-gradient(transparent 60%,var(--blossom) 60%)}
+.cover-foot{display:flex;justify-content:space-between;align-items:flex-end}
+.mingti{width:22mm;height:22mm;min-height:0;border-radius:50%;font-size:7pt}
+
+/* ---------- 2. 목차 / 편집자의 글 ---------- */
+.toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10mm;flex:1}
+.toc h2{font-family:var(--display);font-size:34pt;font-weight:900}
+.toc ol{list-style:none;padding:0;margin:6mm 0 0;display:flex;flex-direction:column}
+.toc li{display:grid;grid-template-columns:12mm 1fr auto;gap:3mm;align-items:baseline;padding:3mm 0;border-bottom:.2mm solid var(--line)}
+.toc li .n{font-family:var(--display);font-weight:700;color:var(--sky-ink)}
+.toc li .p{font-family:var(--display);font-variant-numeric:tabular-nums;color:var(--soft)}
+.letter{background:#ffffffcc;border:.3mm solid var(--ink);border-radius:2mm;padding:7mm;display:flex;flex-direction:column;gap:4mm}
+.letter h3{font-size:14pt}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+.flow .step{border-top:.6mm solid var(--ink);padding-top:2.5mm;display:flex;flex-direction:column;gap:1.5mm}
+.flow .when{font-family:var(--display);font-weight:700;font-size:9pt;color:var(--sky-ink)}
+.flow h3{font-size:11pt}
+.flow p{font-size:9pt;color:var(--soft);line-height:1.55}
+
+/* ---------- 섹션 오프너 ---------- */
+.opener{display:grid;grid-template-columns:1fr 1fr;gap:8mm;align-items:end}
+.part{font-family:var(--display);font-weight:900;font-size:72pt;line-height:.85;color:var(--sky)}
+.part.pink{color:var(--blossom)}
+.opener h2{font-size:22pt}
+.lede{font-family:var(--head);font-size:11.5pt;line-height:1.75}
+
+/* 정보 표 */
+.info{width:100%;border-collapse:collapse;font-size:9.5pt}
+.info th{width:32mm;text-align:left;vertical-align:top;font-family:var(--head);font-weight:700;padding:2.5mm 3mm;background:var(--sky);border-bottom:.2mm solid #fff}
+.info td{padding:2.5mm 3mm;border-bottom:.2mm solid var(--line);background:#ffffffb3}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+.box{border:.3mm solid var(--ink);border-radius:2mm;padding:5mm;background:#ffffffcc;display:flex;flex-direction:column;gap:2.5mm}
+.box h3{font-size:11.5pt;display:flex;gap:2mm;align-items:center}
+.box ul{margin:0;padding-left:4.5mm}
+.box li{margin:.5mm 0}
+.dropcap::first-letter{font-family:var(--head);font-weight:800;float:left;font-size:30pt;line-height:1;margin:1mm 2mm 0 0;color:var(--sky-ink)}
+
+/* 구현 내역 표 */
+.impl{width:100%;border-collapse:collapse;table-layout:fixed}
+.impl thead th{font-family:var(--head);font-size:9pt;text-align:left;padding:2mm 3mm;border-top:.6mm solid var(--ink);border-bottom:.3mm solid var(--ink)}
+.impl td{vertical-align:top;padding:3mm;border-bottom:.2mm solid var(--line)}
+.impl td:first-child{width:14mm;font-family:var(--display);font-weight:900;font-size:18pt;color:var(--sky-ink)}
+.impl .ph{height:42mm}
+.impl h3{font-size:10.5pt;margin-bottom:1.5mm}
+.impl p{font-size:9pt;line-height:1.6}
+.impl .key{display:inline-block;font-family:var(--display);font-weight:700;font-size:8pt;border:.3mm solid var(--ink);border-radius:1mm;padding:0 1.5mm;margin-right:1mm}
+
+/* ---------- 지역 명소 특집 ---------- */
+.feature{display:grid;grid-template-columns:1.25fr 1fr;gap:6mm;flex:1;min-height:0}
+.feature .big{height:100%}
+.spot-side{display:flex;flex-direction:column;gap:4mm}
+.spot-side .ph{height:40mm}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:1.5mm 3mm;font-size:9pt;border-top:.3mm solid var(--ink);border-bottom:.3mm solid var(--ink);padding:3mm 0}
+.facts dt{font-family:var(--head);font-weight:700}
+.facts dd{margin:0}
+.pull{font-family:var(--head);font-weight:800;font-size:15pt;line-height:1.4;border-left:1.2mm solid var(--blossom);padding-left:4mm}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+.card{background:#ffffffcc;border:.2mm solid var(--line);border-top:1mm solid var(--mint);border-radius:1.5mm;padding:3.5mm;display:flex;flex-direction:column;gap:1.5mm}
+.card:nth-child(2){border-top-color:var(--butter)}
+.card:nth-child(3){border-top-color:var(--blossom)}
+.card h3{font-size:10.5pt}
+.card p{font-size:8.8pt;line-height:1.55}
+.card .ph{height:30mm}
+
+/* ZEP 구현 */
+.mapflow{display:flex;align-items:center;gap:3mm;font-family:var(--head);font-size:9pt}
+.mapflow .node{flex:1;text-align:center;border:.3mm solid var(--ink);border-radius:99px;padding:2mm 1mm;background:#fff}
+.mapflow .node.on{background:var(--sky)}
+.mapflow .arr{color:var(--soft);font-family:var(--display)}
+.shots{display:grid;grid-template-columns:repeat(2,1fr);gap:5mm}
+.shot{display:flex;flex-direction:column;gap:1.5mm}
+.shot .ph{height:52mm}
+.shot figcaption{font-size:8.8pt;line-height:1.5}
+.shot figcaption b{font-family:var(--head)}
+figure{margin:0}
+
+/* ---------- 초대장 ---------- */
+.invite{flex:1;display:grid;grid-template-columns:1fr 52mm;gap:7mm;min-height:0}
+.paper{position:relative;background:#fff;border:.3mm solid var(--ink);border-radius:2mm;padding:9mm 9mm 9mm 13mm;
+  background-image:repeating-linear-gradient(transparent 0 8.4mm,#e3e8ee 8.4mm 8.6mm);background-position:0 7mm}
+.paper::before{content:"";position:absolute;top:0;bottom:0;left:8mm;border-left:.4mm solid var(--blossom)}
+.paper .hand{font-size:15pt;line-height:8.6mm}
+.paper .hand p{margin:0}
+.side{display:flex;flex-direction:column;gap:5mm}
+.qr{background:#fff;border:.3mm solid var(--ink);border-radius:2mm;padding:4mm;display:flex;flex-direction:column;align-items:center;gap:2mm;text-align:center}
+#qrbox{width:40mm;height:40mm;display:flex;align-items:center;justify-content:center;color:var(--soft);font-size:8pt;border:.2mm dashed var(--line)}
+#qrbox img,#qrbox canvas{width:40mm!important;height:40mm!important}
+.url{font-family:var(--display);font-size:7.5pt;word-break:break-all;color:var(--sky-ink)}
+.howto{counter-reset:h;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:2mm;font-size:9pt}
+.howto li{counter-increment:h;display:grid;grid-template-columns:6mm 1fr;gap:2mm}
+.howto li::before{content:counter(h);font-family:var(--display);font-weight:900;color:#fff;background:var(--sky-ink);border-radius:50%;width:5.5mm;height:5.5mm;display:flex;align-items:center;justify-content:center;font-size:8pt}
+
+/* ---------- 뒷표지 ---------- */
+.reflect{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm}
+.credits{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;font-size:9pt}
+.credits div{background:#ffffffcc;border:.2mm solid var(--line);border-radius:1.5mm;padding:2.5mm;text-align:center}
+.credits b{display:block;font-family:var(--head)}
+.back-end{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;border-top:.6mm solid var(--ink);padding-top:3mm}
+.back-end .title{font-family:var(--display);font-weight:900;font-size:30pt;line-height:1}
+.back-end .title i{color:var(--sky-ink)}
+
+/* ---------- 인쇄 ---------- */
+@page{size:A4;margin:0}
+@media print{
+  body{background:none}
+  .toolbar,.notice{display:none!important}
+  .pages{padding:0;gap:0}
+  .page{box-shadow:none;break-after:page;page-break-after:always}
+  .page:last-child{break-after:auto}
+  .ph:not(.filled){border-color:#cfd6df}
+  .ph:not(.filled) span{visibility:hidden}
+  [contenteditable]:hover{background:none}
+}
+/* 화면이 좁을 때(휴대폰)는 페이지를 축소해서 보여줌 */
+@media screen and (max-width:820px){
+  .pages{zoom:.46}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a class="home" href="../">← 2학년 8반</a>
+  <b>ZEP Magazine</b>
+  <button type="button" id="btnPrint">인쇄 / PDF 저장</button>
+  <button type="button" id="btnUrl">ZEP 링크 입력 → QR 만들기</button>
+  <button type="button" id="btnReset">처음 상태로</button>
+  <span class="tip">글자는 눌러서 바로 고치고, 점선 칸을 누르면 사진이 들어가요. 고친 내용은 이 브라우저에 자동 저장됩니다.</span>
+</div>
+<div class="notice" id="notice"></div>
+<input type="file" id="fileIn" accept="image/*" hidden>
+
+<main class="pages" id="pages">
+
+<!-- ===================== P1 표지 ===================== -->
+<section class="page cover">
+  <div class="mast">
+    <div class="title">ZEP<br><i>Magazine</i></div>
+    <div class="issue"><span class="ed">2026 · Vol. 01</span><br><span class="ed">신원고 2학년 8반</span><br><span class="ed">진로 × 에듀테크 프로젝트</span></div>
+  </div>
+  <div class="cover-sub"><span class="ed">메타버스로 만나는 우리 학교, 우리 동네</span><span class="ed">1학기 ~ 2학기 프로젝트 결과 보고</span></div>
+  <h1 class="cover-head ed">교실 밖으로 걸어 나간<br><em>우리 동네 메타버스</em></h1>
+  <div class="cover-body">
+    <div class="ph" data-ph="cover"><span>표지 사진<br>(ZEP 로비 맵 전체 화면 추천)</span></div>
+    <div class="coverlines">
+      <div><div class="no">01</div><h3 class="ed">학교를 옮겨 온 가상 캠퍼스</h3><p class="ed">1학기, ZEP으로 우리 학교를 소개하다</p></div>
+      <div><div class="no">02</div><h3 class="ed">지역 명소 특집</h3><p class="ed">2학기, 모둠별로 고른 우리 동네 자랑</p></div>
+      <div><div class="no">03</div><h3 class="ed">링크 하나로 떠나는 탐방</h3><p class="ed">친구에게 보내는 초대의 글</p></div>
+    </div>
+  </div>
+  <div class="cover-foot">
+    <p class="hand ed">“F키를 눌러 우리 동네 이야기를 열어 보세요!”</p>
+    <div class="ph mingti" data-ph="mascot"><span>캐릭터<br>이미지</span></div>
+  </div>
+</section>
+
+<!-- ===================== P2 목차 + 편집자의 글 ===================== -->
+<section class="page">
+  <div class="run"><span>Contents</span><span>ZEP Magazine · 2026</span></div>
+  <div class="toc-grid">
+    <div class="toc">
+      <p class="kicker">In this issue</p>
+      <h2>Contents</h2>
+      <ol>
+        <li><span class="n">01</span><span class="ed">편집자의 글 · 프로젝트 흐름</span><span class="p">02</span></li>
+        <li><span class="n">02</span><span class="ed">PART 1. 우리 학교 가상 캠퍼스</span><span class="p">03</span></li>
+        <li><span class="n">03</span><span class="ed">스페이스 세부 구현 내역</span><span class="p">04</span></li>
+        <li><span class="n">04</span><span class="ed">PART 2. 지역 명소 특집</span><span class="p">05</span></li>
+        <li><span class="n">05</span><span class="ed">ZEP 공간으로 옮기기</span><span class="p">06</span></li>
+        <li><span class="n">06</span><span class="ed">친구에게 보내는 초대장</span><span class="p">07</span></li>
+        <li><span class="n">07</span><span class="ed">돌아보며 · 만든 사람들</span><span class="p">08</span></li>
+      </ol>
+    </div>
+    <div class="letter">
+      <span class="tag">Editor’s Letter</span>
+      <h3 class="ed">학교에서 시작해 동네까지, 한 학기씩 넓혀 온 공간</h3>
+      <p class="ed">1학기에는 매일 다니는 학교를 ZEP 안에 옮겨 놓는 것부터 시작했습니다. 직접 찍은 사진과 영상을 붙이고, F키를 누르면 설명이 열리도록 오브젝트를 하나씩 배치했습니다.</p>
+      <p class="ed">2학기에는 시선을 학교 밖으로 돌렸습니다. 모둠마다 소개하고 싶은 지역 명소를 정해 내용을 조사하고, 그 이야기를 다시 ZEP 공간으로 만들었습니다. 마지막에는 완성한 공간의 링크를 담아 친구들에게 초대의 글을 썼습니다.</p>
+      <p class="hand ed" style="margin-top:auto">— 2학년 8반 편집부</p>
+    </div>
+  </div>
+  <div>
+    <p class="kicker" style="margin-bottom:3mm">Project Flow</p>
+    <div class="flow">
+      <div class="step"><span class="when ed">1학기 · 1차시</span><h3 class="ed">ZEP 학교 소개</h3><p class="ed">학교 공간을 그대로 재현한 가상 캠퍼스 제작, 주차별 구현 내역 제출</p></div>
+      <div class="step"><span class="when ed">2학기 · 2~5차시</span><h3 class="ed">지역 명소 구체화 · 구현</h3><p class="ed">명소 소개 내용을 조사·정리하고 ZEP 메타버스 공간으로 구현</p></div>
+      <div class="step"><span class="when ed">2학기 · 3단계</span><h3 class="ed">링크 공유 · 초대의 글</h3><p class="ed">완성된 공간의 URL을 확보하고 초대 이유와 활용 방법을 담은 글 작성</p></div>
+    </div>
+  </div>
+  <div class="folio"><span>02</span><span class="ed">신원고 2학년 8반</span></div>
+</section>
+
+<!-- ===================== P3 PART 1 개요 ===================== -->
+<section class="page">
+  <div class="run"><span>Part 1 · 1학기</span><span>School Campus</span></div>
+  <div class="opener">
+    <div><div class="part">01</div><p class="kicker">Virtual Campus</p><h2 class="ed">우리 학교를 ZEP으로 옮기다</h2></div>
+    <p class="lede ed">현실의 교실과 복도를 그대로 재현한 가상 캠퍼스. 처음 학교를 찾는 사람도 캐릭터를 움직이며 학교 곳곳을 둘러볼 수 있도록 만들었습니다.</p>
+  </div>
+  <table class="info">
+    <tr><th>스페이스 명칭</th><td class="ed">신원고등학교 가상 캠퍼스</td></tr>
+    <tr><th>ZEP 접속 링크</th><td class="ed placeholder">https://zep.us/play/ 링크를 입력하세요</td></tr>
+    <tr><th>제작 참여자</th><td class="ed placeholder">학번 / 성명 (예: 20801 김○○, 20802 이○○)</td></tr>
+  </table>
+  <div class="cols2">
+    <div class="box">
+      <h3><span class="tag">기획 배경</span></h3>
+      <p class="dropcap ed">왜 이 스페이스를 만들게 되었는지, 누구를 위한 공간인지 적어 주세요. 예를 들어 학교를 처음 방문하는 신입생과 학부모가 미리 학교를 둘러볼 수 있도록 만들었습니다.</p>
+    </div>
+    <div class="box">
+      <h3><span class="tag pink">공간 전체 콘셉트</span></h3>
+      <p class="ed">현실 학교의 모습을 그대로 재현한 미러월드. 본관, 운동장, 도서관처럼 실제 동선을 따라 이동하며 공간마다 숨은 이야기를 찾는 구성입니다.</p>
+    </div>
+  </div>
+  <div class="box" style="border-color:var(--sky-ink)">
+    <h3><span class="tag mint">주요 특징</span></h3>
+    <ul>
+      <li class="ed">실제 촬영한 영상과 사진을 활용한 생동감 있는 환경 구축</li>
+      <li class="ed">F키 상호작용을 통한 자기주도적 자료 학습 기능 강화</li>
+      <li class="ed">특징을 추가로 적어 주세요</li>
+    </ul>
+  </div>
+  <div class="ph" data-ph="p3" style="flex:1"><span>스페이스 대표 화면 (전체 맵 스크린샷)</span></div>
+  <div class="folio"><span>03</span><span>Part 1 · 우리 학교 가상 캠퍼스</span></div>
+</section>
+
+<!-- ===================== P4 세부 구현 내역 ===================== -->
+<section class="page">
+  <div class="run"><span>Part 1 · 1학기</span><span>Build Log</span></div>
+  <div>
+    <p class="kicker">Build Log</p>
+    <h2 class="ed" style="font-size:20pt">스페이스 세부 구현 내역</h2>
+    <p class="ed" style="color:var(--soft);font-size:9.5pt;margin-top:1mm">매주 제출했던 구현 내역을 바탕으로 최종 업데이트된 내용을 정리했습니다.</p>
+  </div>
+  <table class="impl">
+    <thead><tr><th style="width:14mm">No.</th><th>구현 화면 (스크린샷)</th><th>주요 오브젝트 및 기능</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><div class="ph" data-ph="b1"><span>스크린샷</span></div></td><td><h3 class="ed">정문 · 로비</h3><p class="ed"><span class="key">F</span>정문 앞 안내판을 누르면 학교 소개 영상이 재생됩니다. 처음 들어온 사람을 위한 이동 안내 표지판을 배치했습니다.</p></td></tr>
+      <tr><td>2</td><td><div class="ph" data-ph="b2"><span>스크린샷</span></div></td><td><h3 class="ed">교실 · 복도</h3><p class="ed"><span class="key">F</span>실제 교실 사진을 배경으로 쓰고, 게시판 오브젝트에 반 활동 사진을 연결했습니다.</p></td></tr>
+      <tr><td>3</td><td><div class="ph" data-ph="b3"><span>스크린샷</span></div></td><td><h3 class="ed">특별실 · 운동장</h3><p class="ed"><span class="key">F</span>공간 이름과 주요 오브젝트, 상호작용 방식을 적어 주세요.</p></td></tr>
+      <tr><td>4</td><td><div class="ph" data-ph="b4"><span>스크린샷</span></div></td><td><h3 class="ed">구현한 공간 이름</h3><p class="ed"><span class="key">F</span>사용한 오브젝트와 연결한 자료(사진, 영상, 웹 링크)를 적어 주세요.</p></td></tr>
+    </tbody>
+  </table>
+  <div class="folio"><span>04</span><span>Part 1 · 세부 구현 내역</span></div>
+</section>
+
+<!-- ===================== P5 PART 2 지역 명소 특집 ===================== -->
+<section class="page">
+  <div class="run"><span>Part 2 · 2학기</span><span>Local Feature</span></div>
+  <div class="opener">
+    <div><div class="part pink">02</div><p class="kicker">Local Spot Special</p><h2 class="ed">우리 동네 명소, ○○○</h2></div>
+    <p class="lede ed">학교를 넘어 동네로. 우리 모둠이 고른 명소의 매력을 조사해 소개합니다. 왜 이곳을 골랐는지 한두 문장으로 적어 주세요.</p>
+  </div>
+  <div class="feature">
+    <div class="ph big" data-ph="spot-main"><span>명소 대표 사진<br>(직접 찍은 사진 추천)</span></div>
+    <div class="spot-side">
+      <dl class="facts">
+        <dt>명소 이름</dt><dd class="ed">○○○</dd>
+        <dt>위치</dt><dd class="ed">경기도 고양시 ○○구 ○○로</dd>
+        <dt>가는 길</dt><dd class="ed">학교에서 버스로 ○○분</dd>
+        <dt>추천 시기</dt><dd class="ed">봄 · 가을 저녁</dd>
+        <dt>모둠</dt><dd class="ed">○모둠 (학번 / 성명)</dd>
+      </dl>
+      <p class="pull ed">“명소를 한 문장으로 소개하는 인상적인 문구를 넣어 주세요.”</p>
+      <div class="ph" data-ph="spot-sub"><span>보조 사진</span></div>
+    </div>
+  </div>
+  <div class="cards3">
+    <div class="card"><span class="tag mint">특징</span><h3 class="ed">이곳만의 매력</h3><p class="ed">역사, 자연, 볼거리 등 명소의 특징을 적어 주세요.</p></div>
+    <div class="card"><span class="tag butter">맛집</span><h3 class="ed">근처에서 먹을 곳</h3><p class="ed">함께 들르기 좋은 맛집과 추천 메뉴를 적어 주세요.</p></div>
+    <div class="card"><span class="tag pink">팁</span><h3 class="ed">방문 꿀팁</h3><p class="ed">사진 찍기 좋은 곳, 주의할 점 등을 적어 주세요.</p></div>
+  </div>
+  <div class="folio"><span>05</span><span>Part 2 · 지역 명소 특집</span></div>
+</section>
+
+<!-- ===================== P6 ZEP 구현 ===================== -->
+<section class="page">
+  <div class="run"><span>Part 2 · 2학기</span><span>Into the Metaverse</span></div>
+  <div>
+    <p class="kicker">Into the Metaverse</p>
+    <h2 class="ed" style="font-size:20pt">명소를 ZEP 공간으로 옮기기</h2>
+    <p class="ed" style="color:var(--soft);font-size:9.5pt;margin-top:1mm">조사한 내용을 어떤 공간과 오브젝트로 표현했는지 정리했습니다.</p>
+  </div>
+  <div>
+    <p class="kicker" style="margin-bottom:2mm">Map Route</p>
+    <div class="mapflow">
+      <span class="node ed">반 로비 맵</span><span class="arr">→</span>
+      <span class="node on ed">포털</span><span class="arr">→</span>
+      <span class="node ed">우리 모둠 맵</span><span class="arr">→</span>
+      <span class="node ed">명소 구역</span><span class="arr">→</span>
+      <span class="node ed">맛집 구역</span>
+    </div>
+  </div>
+  <div class="shots">
+    <figure class="shot"><div class="ph" data-ph="z1"><span>입구 · 포털 화면</span></div><figcaption class="ed"><b>입구</b> 로비에서 포털을 타고 들어오면 보이는 첫 장면입니다.</figcaption></figure>
+    <figure class="shot"><div class="ph" data-ph="z2"><span>명소 구역 화면</span></div><figcaption class="ed"><b>명소 구역</b> F키를 누르면 명소 설명과 사진이 열립니다.</figcaption></figure>
+    <figure class="shot"><div class="ph" data-ph="z3"><span>맛집 구역 화면</span></div><figcaption class="ed"><b>맛집 구역</b> 추천 맛집을 오브젝트로 배치하고 메뉴를 소개했습니다.</figcaption></figure>
+    <figure class="shot"><div class="ph" data-ph="z4"><span>퀴즈 · 이벤트 화면</span></div><figcaption class="ed"><b>퀴즈</b> 탐방을 마친 친구가 풀 수 있는 퀴즈를 넣었습니다.</figcaption></figure>
+  </div>
+  <div class="box">
+    <h3><span class="tag">구현하며 고민한 점</span></h3>
+    <p class="ed">현실의 명소를 어떻게 공간으로 표현했는지, 어려웠던 점과 해결한 방법을 적어 주세요.</p>
+  </div>
+  <div class="folio"><span>06</span><span>Part 2 · ZEP 구현</span></div>
+</section>
+
+<!-- ===================== P7 초대장 ===================== -->
+<section class="page">
+  <div class="run"><span>Part 3 · Invitation</span><span>You’re Invited</span></div>
+  <div>
+    <p class="kicker">You’re Invited</p>
+    <h2 class="ed" style="font-size:22pt">우리 동네로 놀러 와!</h2>
+  </div>
+  <div class="invite">
+    <div class="paper">
+      <div class="hand ed">
+        <p>사랑하는 친구에게,</p>
+        <p>안녕! 우리 모둠이 두 달 동안 만든 ZEP 공간에 너를 초대하고 싶어.</p>
+        <p>이곳을 고른 이유는 …</p>
+        <p>(초대하는 이유를 적어 주세요)</p>
+        <p>&nbsp;</p>
+        <p>들어오면 먼저 …</p>
+        <p>(공간을 어떻게 둘러보면 좋은지 적어 주세요)</p>
+        <p>&nbsp;</p>
+        <p>꼭 놀러 와! 기다릴게.</p>
+        <p style="text-align:right">2026년 ○월 ○일, ○○○ 씀</p>
+      </div>
+    </div>
+    <div class="side">
+      <div class="qr">
+        <span class="tag">ZEP 바로가기</span>
+        <div id="qrbox">ZEP 링크를 입력하면<br>QR코드가 생겨요</div>
+        <span class="url" id="urlText">zep.us/play/…</span>
+      </div>
+      <div class="box">
+        <h3><span class="tag mint">이렇게 즐겨요</span></h3>
+        <ol class="howto">
+          <li class="ed">QR을 찍거나 링크로 접속해요</li>
+          <li class="ed">방향키로 캐릭터를 움직여요</li>
+          <li class="ed">반짝이는 오브젝트 앞에서 F키!</li>
+          <li class="ed">마지막 퀴즈까지 풀어 보기</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="folio"><span>07</span><span>Part 3 · 초대의 글</span></div>
+</section>
+
+<!-- ===================== P8 뒷표지 ===================== -->
+<section class="page">
+  <div class="run"><span>Behind the Scenes</span><span>ZEP Magazine · 2026</span></div>
+  <div>
+    <p class="kicker">Looking Back</p>
+    <h2 class="ed" style="font-size:22pt">프로젝트를 돌아보며</h2>
+  </div>
+  <div class="reflect">
+    <div class="box"><h3><span class="tag">배운 점</span></h3><p class="ed">ZEP 공간을 만들며 새롭게 알게 된 것을 적어 주세요.</p></div>
+    <div class="box"><h3><span class="tag pink">어려웠던 점</span></h3><p class="ed">막혔던 순간과 그것을 어떻게 넘겼는지 적어 주세요.</p></div>
+    <div class="box"><h3><span class="tag mint">다음에 해 보고 싶은 것</span></h3><p class="ed">명소 방문 체험, 해외 친구에게 소개하기 등 이어서 하고 싶은 활동을 적어 주세요.</p></div>
+  </div>
+  <div class="ph" data-ph="team" style="height:70mm"><span>모둠 단체 사진 또는 활동 사진</span></div>
+  <div>
+    <p class="kicker" style="margin-bottom:2mm">Credits</p>
+    <div class="credits">
+      <div><b class="ed">기획</b><span class="ed">○○○</span></div>
+      <div><b class="ed">조사 · 글</b><span class="ed">○○○</span></div>
+      <div><b class="ed">ZEP 맵 제작</b><span class="ed">○○○</span></div>
+      <div><b class="ed">사진 · 디자인</b><span class="ed">○○○</span></div>
+    </div>
+  </div>
+  <div class="back-end">
+    <div class="title">ZEP <i>Magazine</i></div>
+    <p class="hand ed" style="text-align:right">다음 호에서는<br>직접 걸어 본 우리 동네 이야기로 만나요!</p>
+  </div>
+</section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var KEY = "zep-magazine-v1";
+  var pages = document.getElementById("pages");
+  var notice = document.getElementById("notice");
+  var fileIn = document.getElementById("fileIn");
+  var original = pages.innerHTML;
+  var currentPh = null;
+
+  function say(msg){ notice.textContent = msg; notice.classList.add("show"); }
+
+  function store(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+  function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+
+  function wire(){
+    pages.querySelectorAll(".ed").forEach(function(el){
+      el.setAttribute("contenteditable","true");
+      el.setAttribute("spellcheck","false");
+    });
+    pages.querySelectorAll(".ph").forEach(function(ph){
+      ph.setAttribute("tabindex","0");
+      ph.setAttribute("role","button");
+      ph.setAttribute("aria-label","사진 넣기");
+    });
+    var u = load(KEY+"-url"); if(u) makeQR(u);
+  }
+
+  var timer;
+  function save(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      if(!store(KEY, pages.innerHTML)) say("사진 용량이 커서 자동 저장을 하지 못했어요. 인쇄는 그대로 할 수 있습니다.");
+    }, 400);
+  }
+
+  var saved = load(KEY);
+  if(saved) pages.innerHTML = saved;
+  wire();
+
+  pages.addEventListener("input", function(e){
+    if(e.target.classList) e.target.classList.remove("placeholder");
+    save();
+  });
+  // 붙여넣기는 글자만
+  pages.addEventListener("paste", function(e){
+    if(!e.target.closest("[contenteditable]")) return;
+    e.preventDefault();
+    var t = (e.clipboardData||window.clipboardData).getData("text");
+    document.execCommand("insertText", false, t);
+  });
+
+  function pick(ph){ currentPh = ph; fileIn.value = ""; fileIn.click(); }
+  pages.addEventListener("click", function(e){ var ph = e.target.closest(".ph"); if(ph) pick(ph); });
+  pages.addEventListener("keydown", function(e){
+    var ph = e.target.closest && e.target.closest(".ph");
+    if(ph && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); pick(ph); }
+  });
+
+  fileIn.addEventListener("change", function(){
+    var f = fileIn.files && fileIn.files[0];
+    if(!f || !currentPh) return;
+    var ph = currentPh;
+    var r = new FileReader();
+    r.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var max = 1600, w = img.width, h = img.height, s = Math.min(1, max/Math.max(w,h));
+        var c = document.createElement("canvas");
+        c.width = Math.round(w*s); c.height = Math.round(h*s);
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        ph.style.backgroundImage = "url(" + c.toDataURL("image/jpeg",0.85) + ")";
+        ph.classList.add("filled");
+        save();
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(f);
+  });
+
+  function makeQR(url){
+    var box = document.getElementById("qrbox");
+    var txt = document.getElementById("urlText");
+    if(!box) return;
+    box.innerHTML = "";
+    txt.textContent = url;
+    if(window.QRCode){
+      new QRCode(box,{text:url,width:300,height:300,colorDark:"#2a2d33",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+    } else {
+      box.textContent = "QR 도구를 불러오지 못했어요";
+    }
+  }
+
+  // 링크 입력: 페이지 안에서 처리 (prompt 창 대신)
+  document.getElementById("btnUrl").addEventListener("click", function(){
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;gap:6px;align-items:center;flex-wrap:wrap";
+    wrap.innerHTML = '<label for="zepUrl">ZEP 링크</label><input id="zepUrl" type="url" placeholder="https://zep.us/play/..." style="flex:1;min-width:220px;padding:6px 8px;border:1px solid #ccd;border-radius:6px;font:inherit"><button type="button" id="zepOk" style="font:inherit;padding:6px 12px;border-radius:999px;border:1px solid #ccd;background:#cfe5f4;cursor:pointer">QR 만들기</button>';
+    notice.innerHTML = ""; notice.appendChild(wrap); notice.classList.add("show");
+    var inp = document.getElementById("zepUrl");
+    inp.value = load(KEY+"-url") || "";
+    inp.focus();
+    function ok(){
+      var v = inp.value.trim(); if(!v) return;
+      makeQR(v); store(KEY+"-url", v);
+      notice.classList.remove("show");
+      document.getElementById("qrbox").scrollIntoView({behavior:"smooth",block:"center"});
+      save();
+    }
+    document.getElementById("zepOk").addEventListener("click", ok);
+    inp.addEventListener("keydown", function(e){ if(e.key==="Enter") ok(); });
+  });
+
+  document.getElementById("btnPrint").addEventListener("click", function(){
+    say("인쇄 설정: 용지 A4, 여백 없음, ‘배경 그래픽’ 체크. PDF로 저장하려면 대상에서 ‘PDF로 저장’을 고르세요.");
+    setTimeout(function(){ try{ window.print(); }catch(e){} }, 50);
+  });
+
+  var armed = false;
+  document.getElementById("btnReset").addEventListener("click", function(){
+    var b = this;
+    if(!armed){ armed = true; b.textContent = "한 번 더 누르면 지워져요"; setTimeout(function(){ armed=false; b.textContent="처음 상태로"; }, 3000); return; }
+    try{ localStorage.removeItem(KEY); localStorage.removeItem(KEY+"-url"); }catch(e){}
+    pages.innerHTML = original; wire(); armed=false; b.textContent="처음 상태로";
+  });
+})();
+</script>
+</body>
+</html>
